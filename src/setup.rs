@@ -58,7 +58,11 @@ pub async fn setup<U, E>(
                             "-vore",
                             "-gore",
                             "-transformation",
+                            "-pokémorph",
                             "-comic",
+                            "-pregnant",
+                            "-foot_focus",
+                            "-seductive",
                             "score:>55",
                         ][..],
                     )
