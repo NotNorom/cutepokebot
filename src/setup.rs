@@ -12,21 +12,27 @@ use poise::{
 use rs621::client::Client;
 
 pub struct Data {
+    /// map of guilds and their channel which to send pokemon to
     channels: Arc<RwLock<HashMap<GuildId, ChannelId>>>,
+    /// timeout in minutes
+    timeout: Arc<AtomicU64>,
 }
 
 impl Data {
     fn new() -> Self {
         Self {
             channels: Arc::new(RwLock::new(HashMap::new())),
+            timeout: Arc::new(AtomicU64::new(40)),
         }
     }
 
+    /// Add channel for receiving pokemon
     pub async fn add(&self, guild: GuildId, channel: ChannelId) {
         let mut channels = self.channels.write().await;
         channels.insert(guild, channel);
     }
 
+    /// Remove channel (inside the guild) to receive pokemon
     pub async fn remove(&self, guild: GuildId) {
         let mut channels = self.channels.write().await;
         channels.remove(&guild);
