@@ -9,7 +9,7 @@ edition = "2021"
 dotenv = "0.15.0"
 poise = { git = "https://github.com/kangalioo/poise", features = ["collector"] }
 rs621 = "0.7.0-alpha"
-tokio = { version = "1.16.1", features = ["full"] }
+tokio = { version = "1.16.1", features = ["rt-multi-thread"] }
 
 
 [patch.crates-io]
