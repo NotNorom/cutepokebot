@@ -9,6 +9,7 @@ use poise::{
     serenity_prelude::{ChannelId, Context, CreateEmbed, GuildId, Ready, RwLock, UserId},
     Framework,
 };
+use rs621::client::Client;
 
 pub struct Data {
     channels: Arc<RwLock<HashMap<GuildId, ChannelId>>>,
@@ -51,8 +52,7 @@ pub async fn setup<U, E>(
         println!("Waiting 15 seconds before first run.");
         tokio::time::sleep(Duration::from_secs(15)).await;
 
-        let e6client =
-            rs621::client::Client::new("https://e926.net", "CutePokebot/0.1.0 (norom)").unwrap();
+        let e6client = Client::new("https://e926.net", "CutePokebot/0.1.0 (norom)").unwrap();
         loop {
             {
                 let post = e6client
