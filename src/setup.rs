@@ -43,6 +43,9 @@ pub async fn setup<U, E>(
     let discord_http = context.http.clone();
 
     tokio::spawn(async move {
+        println!("Waiting 15 seconds before first run.");
+        tokio::time::sleep(Duration::from_secs(15)).await;
+
         let e6client =
             rs621::client::Client::new("https://e926.net", "CutePokebot/0.1.0 (norom)").unwrap();
         loop {
@@ -60,6 +63,7 @@ pub async fn setup<U, E>(
                         ][..],
                     )
                     .await;
+
                 match post {
                     Err(err) => {
                         let channel = UserId(160518747713437696)
@@ -71,9 +75,27 @@ pub async fn setup<U, E>(
                             .await;
                     }
                     Ok(post) => {
+                        println!("Posting {:?}", post.id);
                         let embed = CreateEmbed::default()
-                            .title("title")
-                            .image(&post.preview.url.unwrap())
+                            .colour(0x203f6c)    
+                            .title(format!("#{}", post.id))
+                            .description(post.description)
+                            .url(&post.file.url.as_ref().unwrap())
+                            .image(post.file.url.unwrap())
+                            .field(
+                                "Artist(s)",
+                                format!("{}", post.tags.artist.join(", ")),
+                                false,
+                            )
+                            .footer(|footer| {
+                                let score = format!(
+                                    "up: {}, down: {}, total: {}",
+                                    post.score.up,
+                                    post.score.down,
+                                    post.score.up + post.score.down,
+                                );
+                                footer.text(score)
+                            })
                             .to_owned();
                         for channel in channels.values() {
                             let _ = channel
