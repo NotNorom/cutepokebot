@@ -1,0 +1,16 @@
+[package]
+name = "cutepokebot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dotenv = "0.15.0"
+poise = { git = "https://github.com/kangalioo/poise", features = ["collector"] }
+rs621 = "0.8.0"
+tokio = { version = "1.16.1", features = ["full"] }
+
+
+[patch.crates-io]
+rs621 = { path = "../rs621" }
