@@ -9,8 +9,8 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 async fn main() {
     poise::Framework::build()
         .token(dotenv::var("DISCORD_BOT_TOKEN").unwrap())
-        .user_data_setup(move |_ctx, _ready, _framework| {
-            Box::pin(setup::setup(_ctx, _ready, _framework))
+        .user_data_setup(move |ctx, ready, framework| {
+            Box::pin(setup::setup(ctx, ready, framework))
         })
         .options(poise::FrameworkOptions {
             // configure framework here
