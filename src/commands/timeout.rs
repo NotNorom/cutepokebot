@@ -22,7 +22,5 @@ pub async fn timeout(
 
     send_reply(ctx, |f| f.content(content).ephemeral(true)).await?;
 
-    ctx.data();
-
     Ok(())
 }

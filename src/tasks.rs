@@ -69,7 +69,8 @@ pub async fn poke_loop(discord_http: Arc<poise::serenity_prelude::Http>, data: D
                 });
             }
         }
-        // 20 * 60s = 1200s
-        tokio::time::sleep(Duration::from_secs(1200)).await;
+
+        let timeout_minutes = data.timeout();
+        tokio::time::sleep(Duration::from_secs(timeout_minutes * 60)).await;
     }
 }
