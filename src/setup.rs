@@ -32,8 +32,8 @@ impl Data {
         let tags = tags.into_iter().map(|s| s.into()).collect();
         Self {
             channels: Arc::new(RwLock::new(HashMap::new())),
+            // 40 minutes as the default timeout
             timeout: Arc::new(AtomicU64::new(40)),
-            // e6 allows up to 40 tags in their search
             tags: Arc::new(RwLock::new(tags)),
         }
     }
@@ -76,16 +76,32 @@ pub async fn setup<U, E>(
     _ready: &Ready,
     _framework: &Framework<U, E>,
 ) -> Result<crate::Data, crate::Error> {
+    // possible other tags to blocklist:
+    // -breasts -nipples -butt -legwear -thick_thighs
+
     let data = Data::new([
         "pokémon_(species)",
-        "-vore",
-        "-gore",
-        "-transformation",
-        "-pokémorph",
+        "-abs",
+        "-blob(disambiguation)",
+        "-card_game",
         "-comic",
-        "-pregnant",
+        "-diaper",
+        "-dominatrix",
+        "-expansion",
         "-foot_focus",
+        "-gore",
+        "-human",
+        "-inflation",
+        "-model_sheet",
+        "-muscular",
+        "-nightmare_fuel",
+        "-nipples",
+        "-overweight",
+        "-pokémorph",
+        "-pregnant",
         "-seductive",
+        "-transformation",
+        "-vore",
         "score:>55",
     ]);
 
