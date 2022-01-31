@@ -19,13 +19,22 @@ pub struct Data {
     channels: Arc<RwLock<HashMap<GuildId, ChannelId>>>,
     /// timeout in minutes
     timeout: Arc<AtomicU64>,
+    /// the tags which to search for
+    tags: Arc<RwLock<Vec<String>>>,
 }
 
 impl Data {
-    fn new() -> Self {
+    fn new<T, S>(tags: T) -> Self
+    where
+        T: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        let tags = tags.into_iter().map(|s| s.into()).collect();
         Self {
             channels: Arc::new(RwLock::new(HashMap::new())),
             timeout: Arc::new(AtomicU64::new(40)),
+            // e6 allows up to 40 tags in their search
+            tags: Arc::new(RwLock::new(tags)),
         }
     }
 
@@ -55,6 +64,11 @@ impl Data {
     pub fn set_timeout(&self, timeout: u64) {
         self.timeout.store(timeout, Ordering::Relaxed);
     }
+
+    /// Get an arc to the data's tags.
+    pub fn tags(&self) -> Arc<RwLock<Vec<String>>> {
+        self.tags.clone()
+    }
 }
 
 pub async fn setup<U, E>(
@@ -62,7 +76,18 @@ pub async fn setup<U, E>(
     _ready: &Ready,
     _framework: &Framework<U, E>,
 ) -> Result<crate::Data, crate::Error> {
-    let data = Data::new();
+    let data = Data::new([
+        "pokémon_(species)",
+        "-vore",
+        "-gore",
+        "-transformation",
+        "-pokémorph",
+        "-comic",
+        "-pregnant",
+        "-foot_focus",
+        "-seductive",
+        "score:>55",
+    ]);
 
     tokio::spawn(poke_loop(context.http.clone(), data.clone()));
 

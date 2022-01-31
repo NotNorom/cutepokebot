@@ -14,22 +14,10 @@ pub async fn poke_loop(discord_http: Arc<poise::serenity_prelude::Http>, data: D
     tokio::time::sleep(Duration::from_secs(15)).await;
     let e6client = Client::new("https://e926.net", "CutePokebot/0.1.0 (norom)").unwrap();
     loop {
-        let post = e6client
-            .search_random_post(
-                &[
-                    "pokémon_(species)",
-                    "-vore",
-                    "-gore",
-                    "-transformation",
-                    "-pokémorph",
-                    "-comic",
-                    "-pregnant",
-                    "-foot_focus",
-                    "-seductive",
-                    "score:>55",
-                ][..],
-            )
-            .await;
+        let post = {
+            let tags: &Vec<String> = &*data.tags().read_owned().await;
+            e6client.search_random_post(&tags[..]).await
+        };
 
         match post {
             Err(err) => {
