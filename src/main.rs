@@ -1,5 +1,6 @@
 mod commands;
 mod setup;
+mod tasks;
 
 type Data = setup::Data;
 type Error = Box<dyn std::error::Error + Send + Sync>;
