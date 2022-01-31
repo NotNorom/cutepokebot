@@ -1,6 +1,9 @@
 use std::{
     collections::HashMap,
-    sync::{atomic::AtomicU64, Arc},
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
     time::Duration,
 };
 
@@ -38,9 +41,19 @@ impl Data {
         channels.remove(&guild);
     }
 
-    /// Get a reference to the data's channels.
+    /// Get an arc to the data's channels.
     pub fn channels(&self) -> Arc<RwLock<HashMap<GuildId, ChannelId>>> {
         self.channels.clone()
+    }
+
+    /// Get the data's timeout.
+    pub fn timeout(&self) -> u64 {
+        self.timeout.load(Ordering::Relaxed)
+    }
+
+    /// Set the data's timeout.
+    pub fn set_timeout(&self, timeout: u64) {
+        self.timeout.store(timeout, Ordering::Relaxed);
     }
 }
 
