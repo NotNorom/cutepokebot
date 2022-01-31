@@ -63,11 +63,8 @@ pub async fn setup<U, E>(
     _framework: &Framework<U, E>,
 ) -> Result<crate::Data, crate::Error> {
     let data = Data::new();
-    let poke_data = data.clone();
 
-    let discord_http = context.http.clone();
-
-    tokio::spawn(async move { poke_loop(discord_http, poke_data).await });
+    tokio::spawn(poke_loop(context.http.clone(), data.clone()));
 
     Ok(data)
 }
