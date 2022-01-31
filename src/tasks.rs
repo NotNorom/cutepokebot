@@ -10,8 +10,8 @@ use crate::Data;
 
 pub async fn poke_loop(discord_http: Arc<poise::serenity_prelude::Http>, data: Data) -> ! {
     let channels = data.channels();
-    println!("Waiting 15 seconds before first run.");
-    tokio::time::sleep(Duration::from_secs(15)).await;
+    println!("Waiting 20 seconds before first run.");
+    tokio::time::sleep(Duration::from_secs(20)).await;
     let e6client = Client::new("https://e926.net", "CutePokebot/0.1.0 (norom)").unwrap();
     loop {
         let post = {
