@@ -1,12 +1,9 @@
 use std::{sync::Arc, time::Duration};
 
-use poise::{
-    futures_util::future::join_all,
-    serenity_prelude::{CreateEmbed, UserId},
-};
+use poise::{futures_util::future::join_all, serenity_prelude::UserId};
 use rs621::client::Client;
 
-use crate::Data;
+use crate::{utils::embed_from_post, Data};
 
 pub async fn poke_loop(discord_http: Arc<poise::serenity_prelude::Http>, data: Data) -> ! {
     let channels = data.channels();
@@ -33,30 +30,9 @@ pub async fn poke_loop(discord_http: Arc<poise::serenity_prelude::Http>, data: D
                 println!("Posting {:?}", post.id);
                 let channels = channels.read().await.clone();
                 let discord_http = discord_http.clone();
+                let embed = embed_from_post(&post).expect("Embed creation shall not fail!");
 
                 tokio::spawn(async move {
-                    let embed = CreateEmbed::default()
-                        .colour(0x203f6c_u32)
-                        .title(format!("#{}", post.id))
-                        .description(post.description)
-                        .url(&post.file.url.as_ref().unwrap())
-                        .image(post.file.url.unwrap())
-                        .field(
-                            "Artist(s)",
-                            format!("{}", post.tags.artist.join(", ")),
-                            false,
-                        )
-                        .footer(|footer| {
-                            let score = format!(
-                                "up: {}, down: {}, total: {}",
-                                post.score.up,
-                                post.score.down,
-                                post.score.up + post.score.down,
-                            );
-                            footer.text(score)
-                        })
-                        .to_owned();
-
                     let mut channel_futures = Vec::with_capacity(channels.len());
 
                     for channel in channels.values() {
