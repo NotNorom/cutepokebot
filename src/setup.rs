@@ -76,13 +76,12 @@ pub async fn setup<U, E>(
     _ready: &Ready,
     _framework: &Framework<U, E>,
 ) -> Result<crate::Data, crate::Error> {
-    // possible other tags to blocklist:
-    // -breasts -nipples -butt -legwear -thick_thighs
-
     let data = Data::new([
         "pokémon_(species)",
         "-abs",
         "-blob(disambiguation)",
+        "-breasts",
+        "-butt",
         "-card_game",
         "-comic",
         "-diaper",
@@ -100,6 +99,7 @@ pub async fn setup<U, E>(
         "-pokémorph",
         "-pregnant",
         "-seductive",
+        "-thick_thighs",
         "-transformation",
         "-vore",
         "score:>55",
