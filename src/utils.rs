@@ -1,4 +1,9 @@
-use poise::serenity_prelude::CreateEmbed;
+use std::fmt::Display;
+
+use poise::{
+    serenity_prelude::{ButtonStyle, CreateActionRow, CreateEmbed, ReactionType},
+    SlashChoiceParameter,
+};
 use rs621::post::Post;
 
 pub fn embed_from_post(post: &Post) -> Result<CreateEmbed, String> {
@@ -21,8 +26,21 @@ pub fn embed_from_post(post: &Post) -> Result<CreateEmbed, String> {
         .to_owned())
 }
 
+pub fn post_buttons() -> CreateActionRow {
+    let mut action_row = CreateActionRow::default();
+    action_row.create_button(|downvote_button| {
+        downvote_button
+            .custom_id("delte-post")
+            .emoji(ReactionType::Unicode("❌".to_string()))
+            .label("delete")
+            .style(ButtonStyle::Primary)
+    });
+
+    action_row
+}
 
 /// NSFW mode. Default is SFW
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy, SlashChoiceParameter)]
 pub enum NsfwMode {
     #[name = "sfw"]
@@ -34,5 +52,14 @@ pub enum NsfwMode {
 impl Default for NsfwMode {
     fn default() -> Self {
         Self::SFW
+    }
+}
+
+impl Display for NsfwMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NsfwMode::SFW => write!(f, "sfw"),
+            NsfwMode::NSFW => write!(f, "nsfw"),
+        }
     }
 }

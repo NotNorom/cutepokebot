@@ -2,7 +2,7 @@ use poise::send_reply;
 
 use crate::{Context, Error};
 
-/// Gets or sets the timeout
+/// Gets or sets the global timeout
 #[poise::command(prefix_command, slash_command, owners_only)]
 pub async fn timeout(
     ctx: Context<'_>,
