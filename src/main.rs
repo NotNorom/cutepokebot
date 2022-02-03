@@ -1,4 +1,5 @@
 mod commands;
+mod configuration;
 mod setup;
 mod tasks;
 mod utils;
