@@ -15,11 +15,7 @@ use poise::serenity_prelude::{ChannelId, GuildId, UserId};
 pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
     let discord_http = data.context().http.clone();
 
-    loop {
-        if data.nsfw_mode(guild, channel).await.is_none() {
-            break;
-        }
-
+    while data.config_available(guild, channel).await {
         let post = data.get_post(guild, channel).await;
 
         match post {

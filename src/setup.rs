@@ -58,6 +58,14 @@ impl Data {
             .and_modify(|config| config.remove_channel(&channel));
     }
 
+    pub async fn config_available(&self, guild: GuildId, channel: ChannelId) -> bool {
+        let conf = self.guild_configurations.read().await;
+        match conf.get(&guild) {
+            Some(c) => c.has_channel(&channel),
+            None => false,
+        }
+    }
+
     /// Get the data's timeout.
     pub async fn timeout(&self, guild: GuildId, channel: ChannelId) -> Option<u64> {
         let conf = self.guild_configurations.read().await;

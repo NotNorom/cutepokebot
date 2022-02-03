@@ -25,6 +25,10 @@ impl GuildConfiguration {
         self.channels.remove(channel);
     }
 
+    pub fn has_channel(&self, channel: &ChannelId) -> bool{
+        self.channels.contains_key(channel)
+    }
+
     pub fn tags(&self, channel: &ChannelId) -> Option<&Vec<String>> {
         self.channels.get(channel).map(|c| &c.tags)
     }
