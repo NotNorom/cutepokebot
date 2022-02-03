@@ -13,7 +13,7 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 #[tokio::main]
 #[instrument]
 async fn main() {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt().pretty().init();
 
     poise::Framework::build()
         .token(dotenv::var("DISCORD_BOT_TOKEN").unwrap())
