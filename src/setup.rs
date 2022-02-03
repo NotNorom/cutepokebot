@@ -5,7 +5,7 @@ use poise::{
     Framework,
 };
 use rs621::{client::Client, post::Post};
-use tracing::{error, info, instrument};
+use tracing::{debug, error, info, instrument};
 
 use crate::{configuration::GuildConfiguration, tasks::poke_loop, utils::NsfwMode};
 
@@ -71,7 +71,7 @@ impl Data {
             Some(c) => c.has_channel(&channel),
             None => false,
         };
-        info!(available = available);
+        debug!(available = available);
         available
     }
 
@@ -79,13 +79,13 @@ impl Data {
     pub async fn timeout(&self, guild: GuildId, channel: ChannelId) -> Option<u64> {
         let conf = self.guild_configurations.read().await;
         let timeout = conf.get(&guild).map(|c| c.timeout(&channel)).flatten();
-        info!("{:?} minutes", timeout);
+        debug!("{:?} minutes", timeout);
         timeout
     }
 
     /// Set the data's timeout.
     pub async fn set_timeout(&self, guild: GuildId, channel: ChannelId, timeout: u64) {
-        info!("{:?} minutes", timeout);
+        debug!("{:?} minutes", timeout);
         let mut conf = self.guild_configurations.write().await;
         conf.entry(guild).or_default().set_timeout(channel, timeout);
     }
@@ -97,13 +97,13 @@ impl Data {
             .get(&guild)
             .map(|c| c.tags(&channel).cloned())
             .flatten();
-        info!("{:?}", tags);
+        debug!("{:?}", tags);
         tags
     }
 
     /// Set the tags for a channel in a guild
     pub async fn set_tags(&self, guild: GuildId, channel: ChannelId, tags: Vec<String>) {
-        info!("{:?}", tags);
+        debug!("{:?}", tags);
         let mut conf = self.guild_configurations.write().await;
         conf.entry(guild).or_default().set_tags(channel, tags);
     }
@@ -112,13 +112,13 @@ impl Data {
     pub async fn nsfw_mode(&self, guild: GuildId, channel: ChannelId) -> Option<NsfwMode> {
         let conf = self.guild_configurations.read().await;
         let nsfw_mode = conf.get(&guild).map(|c| c.nsfw_mode(&channel)).flatten();
-        info!("{:?}", nsfw_mode);
+        debug!("{:?}", nsfw_mode);
         nsfw_mode
     }
 
     /// Set the nsfw_mode for a channel in a guild
     pub async fn set_nsfw_mode(&self, guild: GuildId, channel: ChannelId, nsfw_mode: NsfwMode) {
-        info!("{:?}", nsfw_mode);
+        debug!("{:?}", nsfw_mode);
         let mut conf = self.guild_configurations.write().await;
         conf.entry(guild)
             .or_default()
@@ -132,7 +132,7 @@ impl Data {
             .get(&guild)
             .map(|c| c.random_timeout(&channel))
             .flatten();
-        info!("{:?}", random_timeout);
+        debug!("{:?}", random_timeout);
         random_timeout
     }
 
@@ -143,7 +143,10 @@ impl Data {
         channel: ChannelId,
         random_timeout: bool,
     ) {
-        info!("{:?}", random_timeout);
+        debug!(
+            "setting random_timeout for {}/{}: {:?}",
+            guild, channel, random_timeout
+        );
         let mut conf = self.guild_configurations.write().await;
         conf.entry(guild)
             .or_default()
