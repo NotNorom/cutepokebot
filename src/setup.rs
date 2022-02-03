@@ -11,7 +11,11 @@ use poise::{
     Framework,
 };
 
-use crate::tasks::poke_loop;
+use crate::{
+    configuration::{ChannelConfiguration, GuildConfiguration},
+    tasks::poke_loop,
+    utils::NsfwMode,
+};
 
 #[derive(Clone, Debug)]
 pub struct Data {
@@ -75,6 +79,18 @@ impl Data {
     pub async fn set_tags(&self, guild: GuildId, channel: ChannelId, tags: Vec<String>) {
         let mut conf = self.guild_configurations.write().await;
         conf.entry(guild).and_modify(|c| c.set_tags(channel, tags));
+    }
+
+    /// Get the nsfw_mode for a channel in a guild
+    pub async fn nsfw_mode(&self, guild: GuildId, channel: ChannelId) -> Option<NsfwMode> {
+        let conf = self.guild_configurations.read().await;
+        conf.get(&guild).map(|c| c.nsfw_mode(&channel)).flatten()
+    }
+    /// Set the nsfw_mode for a channel in a guild
+    pub async fn set_nsfw_mode(&self, guild: GuildId, channel: ChannelId, nsfw_mode: NsfwMode) {
+        let mut conf = self.guild_configurations.write().await;
+        conf.entry(guild)
+            .and_modify(|c| c.set_nsfw_mode(channel, nsfw_mode));
     }
     }
 }

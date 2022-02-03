@@ -20,3 +20,19 @@ pub fn embed_from_post(post: &Post) -> Result<CreateEmbed, String> {
         })
         .to_owned())
 }
+
+
+/// NSFW mode. Default is SFW
+#[derive(Debug, Clone, Copy, SlashChoiceParameter)]
+pub enum NsfwMode {
+    #[name = "sfw"]
+    SFW,
+    #[name = "nsfw"]
+    NSFW,
+}
+
+impl Default for NsfwMode {
+    fn default() -> Self {
+        Self::SFW
+    }
+}
