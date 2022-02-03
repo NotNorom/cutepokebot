@@ -17,6 +17,8 @@ use crate::tasks::poke_loop;
 pub struct Data {
     /// map of guilds and their channel which to send pokemon to
     channels: Arc<RwLock<HashMap<GuildId, ChannelId>>>,
+    /// configurations for all known guilds
+    guild_configurations: Arc<RwLock<HashMap<GuildId, GuildConfiguration>>>,
     /// timeout in minutes
     timeout: Arc<AtomicU64>,
     /// the tags which to search for
@@ -32,6 +34,7 @@ impl Data {
         let tags = tags.into_iter().map(|s| s.into()).collect();
         Self {
             channels: Arc::new(RwLock::new(HashMap::new())),
+            guild_configurations: Arc::new(RwLock::new(HashMap::new())),
             // 40 minutes as the default timeout
             timeout: Arc::new(AtomicU64::new(40)),
             tags: Arc::new(RwLock::new(tags)),
