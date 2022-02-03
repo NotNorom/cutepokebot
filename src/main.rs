@@ -26,6 +26,8 @@ async fn main() {
                 ..Default::default()
             },
             commands: vec![
+                commands::register::register_in_guild(),
+                commands::register::register_globally(),
                 commands::start::start(),
                 commands::stop::stop(),
                 commands::tags::tags(),
