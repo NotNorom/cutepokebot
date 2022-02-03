@@ -47,14 +47,11 @@ impl Data {
     }
 
     /// Remove channel (inside the guild) to receive pokemon
-    pub async fn remove(&self, guild: GuildId) {
-        let mut channels = self.channels.write().await;
-        channels.remove(&guild);
-    }
-
-    /// Get an arc to the data's channels.
-    pub fn channels(&self) -> Arc<RwLock<HashMap<GuildId, ChannelId>>> {
-        self.channels.clone()
+    pub async fn stop(&self, guild: GuildId, channel: ChannelId) {
+        let mut guild_config = self.guild_configurations.write().await;
+        guild_config
+            .entry(guild)
+            .and_modify(|config| config.remove_channel(&channel));
     }
 
     /// Get the data's timeout.
