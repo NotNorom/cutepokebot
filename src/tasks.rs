@@ -1,7 +1,7 @@
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use crate::{
-    utils::{embed_from_post, post_buttons},
+    utils::{embed_from_post, post_buttons, NsfwMode},
     Data,
 };
 use futures::stream::StreamExt;
@@ -18,20 +18,19 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
 
         match post {
             None => {
+                let tags = data.tags(guild, channel).await;
+                let nsfw_mode = data.nsfw_mode(guild, channel).await;
                 error!(
-                    "There is no post to send to guild: {}, channel: {}",
-                    guild, channel
+                    "There is no post to send to guild: {}, channel: {}, nsfw: {:?}, tags: {:?}",
+                    guild, channel, nsfw_mode, tags
                 );
-                let channel = UserId(160518747713437696)
-                    .create_dm_channel(&discord_http)
-                    .await
-                    .unwrap();
-                let _ = channel
-                    .say(
-                        &discord_http,
-                        format!("Error: ```Guild: {}, Channel: {}```", guild, channel),
-                    )
-                    .await;
+                let content = if let Some(NsfwMode::NSFW) = nsfw_mode {
+                    format!("There is no post matching the tags.")
+                } else {
+                    format!("There is no post matching the tags. Nsfw-mode is set to sfw, try setting nsfw-mode to nsfw.")
+                };
+
+                let _ = channel.say(&discord_http, content).await;
             }
             Some(post) => {
                 info!(
