@@ -1,7 +1,7 @@
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use crate::{
-    constants::MINIMUM_TIMEOUT_MINUTES,
+    constants::{MAXIMUM_INETERACTION_TIME, MINIMUM_TIMEOUT_MINUTES},
     utils::{embed_from_post, post_buttons, NsfwMode},
     Data,
 };
@@ -50,10 +50,10 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
                 };
                 let ctx = data.context().clone();
                 tokio::spawn(async move {
-                    let message = channel
+                    let mut message = channel
                         .send_message(&ctx, |m| {
                             m.set_embed(embed.clone())
-                                .components(|c| c.add_action_row(post_buttons()))
+                                .components(|c| c.add_action_row(post_buttons(0, 4)))
                         })
                         .await
                         .unwrap();
@@ -62,13 +62,12 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
 
                     let interaction_authors = Arc::new(RwLock::new(HashSet::<UserId>::new()));
 
-                    while let Some(interaction) = message
+                    let mut collector = message
                         .await_component_interactions(&ctx)
-                        .timeout(Duration::from_secs(10 * 60))
-                        .await
-                        .next()
-                        .await
-                    {
+                        .timeout(Duration::from_secs(MAXIMUM_INETERACTION_TIME * 60))
+                        .await;
+
+                    while let Some(interaction) = collector.next().await {
                         info!("Received interaction: {:?}", interaction);
                         let arc = interaction_authors.clone();
                         let mut authors = arc.write().await;
@@ -86,19 +85,18 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
                                 response
                                     .kind(InteractionResponseType::UpdateMessage)
                                     .interaction_response_data(|c| {
-                                        c.create_embed(|c| {
-                                            *c = embed.clone();
-                                            c.field(
-                                                "Votes needed to delete",
-                                                format!("{}/4", authors.len()),
-                                                false,
-                                            )
+                                        c.components(|com| {
+                                            com.set_action_rows(vec![post_buttons(
+                                                authors.len(),
+                                                4,
+                                            )])
                                         })
                                     })
                             })
                             .await;
                         info!("Interaction response sent");
                     }
+                    let _ = message.edit(&ctx, |msg| msg.components(|c| c)).await;
                 });
             }
         }
@@ -114,6 +112,8 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
         } else {
             timeout_minutes
         };
+
+        info!("Waiting for {} minutes for the next post", sleep_duration);
 
         tokio::time::sleep(Duration::from_secs(sleep_duration * 60)).await;
     }

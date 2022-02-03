@@ -26,13 +26,13 @@ pub fn embed_from_post(post: &Post) -> Result<CreateEmbed, String> {
         .to_owned())
 }
 
-pub fn post_buttons() -> CreateActionRow {
+pub fn post_buttons(current: usize, needed: usize) -> CreateActionRow {
     let mut action_row = CreateActionRow::default();
     action_row.create_button(|downvote_button| {
         downvote_button
-            .custom_id("delte-post")
+            .custom_id("delete-post")
             .emoji(ReactionType::Unicode("❌".to_string()))
-            .label("delete")
+            .label(format!("Delete ({}/{})", current, needed))
             .style(ButtonStyle::Primary)
     });
 
