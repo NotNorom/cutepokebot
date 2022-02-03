@@ -72,7 +72,9 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
                         let mut authors = arc.write().await;
                         if authors.len() >= 4 {
                             let _ = interaction.delete_original_interaction_response(&ctx).await;
-                            info!("Original message is deleted");
+                            info!(
+                                "Original message is deleted. No longer waiting for interactions"
+                            );
                             break;
                         }
                         authors.insert(interaction.user.id);
@@ -80,19 +82,21 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
                         let _ = interaction
                             .create_interaction_response(&ctx, |response| {
                                 response
-                                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                                    .kind(InteractionResponseType::UpdateMessage)
                                     .interaction_response_data(|c| {
-                                        c.content(format!(
-                                            "Votes needed to delte: {}/4",
-                                            authors.len()
-                                        ))
+                                        c.create_embed(|c| {
+                                            *c = embed.clone();
+                                            c.field(
+                                                "Votes needed to delete",
+                                                format!("{}/4", authors.len()),
+                                                false,
+                                            )
+                                        })
                                     })
                             })
                             .await;
                         info!("Interaction response sent");
                     }
-
-                    info!("No longer waiting for interactions");
                 });
             }
         }
