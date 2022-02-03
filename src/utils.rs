@@ -5,8 +5,11 @@ use poise::{
     SlashChoiceParameter,
 };
 use rs621::post::Post;
+use tracing::instrument;
 
+#[instrument]
 pub fn embed_from_post(post: &Post) -> Result<CreateEmbed, String> {
+
     Ok(CreateEmbed::default()
         .colour(0x203f6c_u32)
         .title(format!("#{}", post.id))

@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 mod commands;
 mod configuration;
 mod setup;
@@ -9,7 +11,10 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[tokio::main]
+#[instrument]
 async fn main() {
+    tracing_subscriber::fmt::init();
+
     poise::Framework::build()
         .token(dotenv::var("DISCORD_BOT_TOKEN").unwrap())
         .user_data_setup(move |ctx, ready, framework| Box::pin(setup::setup(ctx, ready, framework)))
