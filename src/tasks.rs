@@ -1,47 +1,61 @@
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 
-use poise::{futures_util::future::join_all, serenity_prelude::UserId};
-use rs621::client::Client;
+use poise::serenity_prelude::{ChannelId, GuildId, UserId};
 
-use crate::{utils::embed_from_post, Data};
+use crate::{
+    utils::{embed_from_post, post_buttons},
+    Data,
+};
 
-pub async fn poke_loop(discord_http: Arc<poise::serenity_prelude::Http>, data: Data) -> ! {
-    let channels = data.channels();
-    println!("Waiting 20 seconds before first run.");
-    tokio::time::sleep(Duration::from_secs(20)).await;
-    let e6client = Client::new("https://e926.net", "CutePokebot/0.1.0 (norom)").unwrap();
+/// Starts the loop for a channel in a guild
+pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
+    let discord_http = data.context().http.clone();
+
     loop {
-        let post = {
-            let tags: &Vec<String> = &*data.tags().read_owned().await;
-            e6client.search_random_post(&tags[..]).await
-        };
+        if data.nsfw_mode(guild, channel).await.is_none() {
+            break;
+        }
+
+        let post = data.get_post(guild, channel).await;
 
         match post {
-            Err(err) => {
+            None => {
                 let channel = UserId(160518747713437696)
                     .create_dm_channel(&discord_http)
                     .await
                     .unwrap();
                 let _ = channel
-                    .say(&discord_http, format!("Error: ```{:#?}```", err))
+                    .say(
+                        &discord_http,
+                        format!("Error: ```Guild: {}, Channel: {}```", guild, channel),
+                    )
                     .await;
             }
-            Ok(post) => {
-                println!("Posting {:?}", post.id);
-                let channels = channels.read().await.clone();
-                let discord_http = discord_http.clone();
+            Some(post) => {
+                println!(
+                    "Posting {:?} in guild {} in channel {}",
+                    post.id, guild, channel
+                );
                 let embed = embed_from_post(&post).expect("Embed creation shall not fail!");
-
+                let ctx = data.context().clone();
                 tokio::spawn(async move {
-                    let mut channel_futures = Vec::with_capacity(channels.len());
+                    let message = channel
+                        .send_message(&ctx, |m| {
+                            m.set_embed(embed.clone())
+                                .components(|c| c.add_action_row(post_buttons()))
+                        })
+                        .await;
 
-                    for channel in channels.values() {
-                        let fut = channel
-                            .send_message(discord_http.clone(), |f| f.set_embed(embed.clone()));
-                        channel_futures.push(fut);
-                    }
-
-                    join_all(channel_futures).await;
+                    // TODO: Figure out how to do component interactions correctly
+                    let _res = match message
+                        .unwrap()
+                        .await_component_interaction(&ctx)
+                        .timeout(Duration::from_secs(40 * 60))
+                        .await
+                    {
+                        Some(ci) => ci,
+                        None => return,
+                    };
                 });
             }
         }

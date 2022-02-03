@@ -10,6 +10,7 @@ use poise::{
     serenity_prelude::{ChannelId, Context, GuildId, Ready, RwLock},
     Framework,
 };
+use rs621::{client::Client, post::Post};
 
 use crate::{
     configuration::{ChannelConfiguration, GuildConfiguration},
@@ -17,10 +18,8 @@ use crate::{
     utils::NsfwMode,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Data {
-    /// map of guilds and their channel which to send pokemon to
-    channels: Arc<RwLock<HashMap<GuildId, ChannelId>>>,
     /// configurations for all known guilds
     guild_configurations: Arc<RwLock<HashMap<GuildId, GuildConfiguration>>>,
     /// timeout in minutes
@@ -29,19 +28,22 @@ pub struct Data {
     e621_client: Arc<Client>,
     /// sfw client
     e926_client: Arc<Client>,
+    /// serenity context
+    context: Context,
 }
 
 impl Data {
-    fn new() -> Self {
+    fn new(context: Context) -> Result<Self, crate::Error> {
         let user_agent = "CutePokebot/0.1.0 (norom)";
 
-        Self {
+        Ok(Self {
             guild_configurations: Arc::new(RwLock::new(HashMap::new())),
             // 40 minutes as the default timeout
             timeout: Arc::new(AtomicU64::new(40)),
-            e621_client: Arc::new(Client::new("https://e621.net", &user_agent).unwrap()),
-            e926_client: Arc::new(Client::new("https://e926.net", &user_agent).unwrap()),
-        }
+            e621_client: Arc::new(Client::new("https://e621.net", &user_agent)?),
+            e926_client: Arc::new(Client::new("https://e926.net", &user_agent)?),
+            context,
+        })
     }
 
     /// Add channel for receiving pokemon
@@ -52,7 +54,7 @@ impl Data {
             .or_default()
             .add_channel(channel, config);
 
-        let handle = tokio::spawn(async move {});
+        let _handle = tokio::spawn(poke_loop(self.clone(), guild, channel));
     }
 
     /// Remove channel (inside the guild) to receive pokemon
@@ -98,6 +100,37 @@ impl Data {
         conf.entry(guild)
             .and_modify(|c| c.set_nsfw_mode(channel, nsfw_mode));
     }
+
+    /// Get's a random post according to the configuration of the given channel
+    /// inside the given guild
+    pub async fn get_post(&self, guild: GuildId, channel: ChannelId) -> Option<Post> {
+        let client = match self.nsfw_mode(guild, channel).await {
+            None => return None,
+            Some(nsfw_mode) => match nsfw_mode {
+                NsfwMode::SFW => self.e926_client.clone(),
+                NsfwMode::NSFW => self.e621_client.clone(),
+            },
+        };
+
+        let tags = self.tags(guild, channel).await;
+
+        let post = match tags {
+            Some(tags) => client.search_random_post(&tags[..]).await,
+            None => return None,
+        };
+
+        match post {
+            Ok(post) => Some(post),
+            Err(err) => {
+                eprintln!("{:?}", err);
+                None
+            }
+        }
+    }
+
+    /// Get a reference to the data's context.
+    pub fn context(&self) -> &Context {
+        &self.context
     }
 }
 
@@ -106,9 +139,5 @@ pub async fn setup<U, E>(
     _ready: &Ready,
     _framework: &Framework<U, E>,
 ) -> Result<crate::Data, crate::Error> {
-    let data = Data::new();
-
-    tokio::spawn(poke_loop(context.clone(), data.clone()));
-
-    Ok(data)
+    Ok(Data::new(context.clone())?)
 }
