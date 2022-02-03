@@ -30,6 +30,7 @@ async fn main() {
                 commands::tags::tags(),
                 commands::nsfw::nsfw(),
                 commands::timeout::timeout(),
+                commands::random_timeout::random_timeout(),
             ],
             ..Default::default()
         })

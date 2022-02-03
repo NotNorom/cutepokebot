@@ -65,15 +65,18 @@ impl GuildConfiguration {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ChannelConfiguration {
-    pub timeout: u64,
-    pub nsfw_mode: NsfwMode,
-    pub tags: Vec<String>,
+    timeout: u64,
+    /// True if timeout should be interpreted as a maximum timeout
+    random_timeout: bool,
+    nsfw_mode: NsfwMode,
+    tags: Vec<String>,
 }
 
 impl Default for ChannelConfiguration {
     fn default() -> Self {
         Self {
             timeout: 40,
+            random_timeout: false,
             nsfw_mode: NsfwMode::SFW,
             tags: vec![
                 "pokémon_(species)",
