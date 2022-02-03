@@ -17,8 +17,8 @@ impl GuildConfiguration {
         }
     }
 
-    pub fn add_channel(&mut self, channel: ChannelId, config: ChannelConfiguration) {
-        self.channels.insert(channel, config);
+    pub fn add_channel(&mut self, channel: ChannelId) {
+        self.channels.entry(channel).or_default();
     }
 
     pub fn remove_channel(&mut self, channel: &ChannelId) {

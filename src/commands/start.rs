@@ -3,7 +3,7 @@ use poise::{
     serenity_prelude::{ChannelId, MessageBuilder},
 };
 
-use crate::{configuration::ChannelConfiguration, utils::NsfwMode, Context, Error};
+use crate::{Context, Error};
 
 /// Display your or another user's account creation date
 #[poise::command(
@@ -14,7 +14,6 @@ use crate::{configuration::ChannelConfiguration, utils::NsfwMode, Context, Error
 pub async fn start(
     ctx: Context<'_>,
     #[description = "Selected channel"] channel: Option<ChannelId>,
-    #[description = "Use nsfw or sfw mode"] nsfw_mode: Option<NsfwMode>,
 ) -> Result<(), Error> {
     let guild = ctx.guild_id().ok_or("Command must be run in server")?;
     let channel = channel.unwrap_or_else(|| ctx.channel_id());
@@ -30,9 +29,7 @@ pub async fn start(
     })
     .await?;
 
-    let config = ChannelConfiguration::new(nsfw_mode.unwrap_or_default(), None);
-
-    ctx.data().start(guild, channel, config).await;
+    ctx.data().start(guild, channel).await;
 
     Ok(())
 }

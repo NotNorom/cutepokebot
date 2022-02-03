@@ -40,12 +40,12 @@ impl Data {
     }
 
     /// Add channel for receiving pokemon
-    pub async fn start(&self, guild: GuildId, channel: ChannelId, config: ChannelConfiguration) {
+    pub async fn start(&self, guild: GuildId, channel: ChannelId) {
         let mut guild_config = self.guild_configurations.write().await;
         guild_config
             .entry(guild)
             .or_default()
-            .add_channel(channel, config);
+            .add_channel(channel);
 
         let _handle = tokio::spawn(poke_loop(self.clone(), guild, channel));
     }
@@ -81,7 +81,7 @@ impl Data {
     /// Set the tags for a channel in a guild
     pub async fn set_tags(&self, guild: GuildId, channel: ChannelId, tags: Vec<String>) {
         let mut conf = self.guild_configurations.write().await;
-        conf.entry(guild).and_modify(|c| c.set_tags(channel, tags));
+        conf.entry(guild).or_default().set_tags(channel, tags);
     }
 
     /// Get the nsfw_mode for a channel in a guild
@@ -92,8 +92,7 @@ impl Data {
     /// Set the nsfw_mode for a channel in a guild
     pub async fn set_nsfw_mode(&self, guild: GuildId, channel: ChannelId, nsfw_mode: NsfwMode) {
         let mut conf = self.guild_configurations.write().await;
-        conf.entry(guild)
-            .and_modify(|c| c.set_nsfw_mode(channel, nsfw_mode));
+        conf.entry(guild).or_default().set_nsfw_mode(channel, nsfw_mode);
     }
 
     /// Get's a random post according to the configuration of the given channel
