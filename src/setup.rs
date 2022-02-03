@@ -5,7 +5,7 @@ use poise::{
     Framework,
 };
 use rs621::{client::Client, post::Post};
-use tracing::instrument;
+use tracing::{error, info, instrument};
 
 use crate::{configuration::GuildConfiguration, tasks::poke_loop, utils::NsfwMode};
 
@@ -51,6 +51,7 @@ impl Data {
         guild_config.entry(guild).or_default().add_channel(channel);
 
         let _handle = tokio::spawn(poke_loop(self.clone(), guild, channel));
+        info!("Task spawned");
     }
 
     /// Remove channel (inside the guild) to receive pokemon
@@ -60,28 +61,34 @@ impl Data {
         guild_config
             .entry(guild)
             .and_modify(|config| config.remove_channel(&channel));
+        info!("Config has been removed. Task should be stoppped");
     }
 
     /// Returns true if a configuration for the channel in the guild is available
     #[instrument(skip(self))]
     pub async fn config_available(&self, guild: GuildId, channel: ChannelId) -> bool {
         let conf = self.guild_configurations.read().await;
-        match conf.get(&guild) {
+        let available = match conf.get(&guild) {
             Some(c) => c.has_channel(&channel),
             None => false,
-        }
+        };
+        info!(available = available);
+        available
     }
 
     /// Get the data's timeout.
     #[instrument(skip(self))]
     pub async fn timeout(&self, guild: GuildId, channel: ChannelId) -> Option<u64> {
         let conf = self.guild_configurations.read().await;
-        conf.get(&guild).map(|c| c.timeout(&channel)).flatten()
+        let timeout = conf.get(&guild).map(|c| c.timeout(&channel)).flatten();
+        info!("{:?} minutes", timeout);
+        timeout
     }
 
     /// Set the data's timeout.
     #[instrument(skip(self))]
     pub async fn set_timeout(&self, guild: GuildId, channel: ChannelId, timeout: u64) {
+        info!("{:?} minutes", timeout);
         let mut conf = self.guild_configurations.write().await;
         conf.entry(guild).or_default().set_timeout(channel, timeout);
     }
@@ -90,14 +97,18 @@ impl Data {
     #[instrument(skip(self))]
     pub async fn tags(&self, guild: GuildId, channel: ChannelId) -> Option<Vec<String>> {
         let conf = self.guild_configurations.read().await;
-        conf.get(&guild)
+        let tags = conf
+            .get(&guild)
             .map(|c| c.tags(&channel).cloned())
-            .flatten()
+            .flatten();
+        info!("{:?}", tags);
+        tags
     }
 
     /// Set the tags for a channel in a guild
     #[instrument(skip(self))]
     pub async fn set_tags(&self, guild: GuildId, channel: ChannelId, tags: Vec<String>) {
+        info!("{:?}", tags);
         let mut conf = self.guild_configurations.write().await;
         conf.entry(guild).or_default().set_tags(channel, tags);
     }
@@ -106,12 +117,15 @@ impl Data {
     #[instrument(skip(self))]
     pub async fn nsfw_mode(&self, guild: GuildId, channel: ChannelId) -> Option<NsfwMode> {
         let conf = self.guild_configurations.read().await;
-        conf.get(&guild).map(|c| c.nsfw_mode(&channel)).flatten()
+        let nsfw_mode = conf.get(&guild).map(|c| c.nsfw_mode(&channel)).flatten();
+        info!("{:?}", nsfw_mode);
+        nsfw_mode
     }
 
     /// Set the nsfw_mode for a channel in a guild
     #[instrument(skip(self))]
     pub async fn set_nsfw_mode(&self, guild: GuildId, channel: ChannelId, nsfw_mode: NsfwMode) {
+        info!("{:?}", nsfw_mode);
         let mut conf = self.guild_configurations.write().await;
         conf.entry(guild)
             .or_default()
@@ -137,10 +151,12 @@ impl Data {
             None => return None,
         };
 
+        info!("{:?}", post);
+
         match post {
             Ok(post) => Some(post),
             Err(err) => {
-                eprintln!("{:?}", err);
+                error!("{:?}", err);
                 None
             }
         }
