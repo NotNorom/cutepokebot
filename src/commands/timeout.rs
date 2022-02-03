@@ -15,23 +15,21 @@ pub async fn timeout(
     let current_timeout = ctx.data().timeout(guild, channel).await;
 
     let content = if let Some(new_timeout) = timeout {
-        let content = if let Some(current_timeout) = current_timeout {
+        if new_timeout <= 3 {
+            "Timeout must be greater than 3".to_string()
+        } else if let Some(current_timeout) = current_timeout {
+            ctx.data().set_timeout(guild, channel, new_timeout).await;
             format!(
                 "Old timeout: {} minutes\nNew timeout: {} minutes",
                 current_timeout, new_timeout
             )
         } else {
+            ctx.data().set_timeout(guild, channel, new_timeout).await;
             format!(
                 "Old timeout is not set.\nNew timeout is: {} minutes",
                 new_timeout
             )
-        };
-
-        ctx.data()
-            .set_timeout(guild, channel, new_timeout)
-            .await;
-
-        content
+        }
     } else if let Some(current_timeout) = current_timeout {
         current_timeout.to_string()
     } else {

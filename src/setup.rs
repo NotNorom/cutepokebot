@@ -132,6 +132,31 @@ impl Data {
             .set_nsfw_mode(channel, nsfw_mode);
     }
 
+    /// Return true if random_timeout is enabled for a channel in a guild
+    pub async fn random_timeout(&self, guild: GuildId, channel: ChannelId) -> Option<bool> {
+        let conf = self.guild_configurations.read().await;
+        let random_timeout = conf
+            .get(&guild)
+            .map(|c| c.random_timeout(&channel))
+            .flatten();
+        info!("{:?}", random_timeout);
+        random_timeout
+    }
+
+    /// Set if random_timeout is to be used for a channel in a guild
+    pub async fn set_random_timeout(
+        &self,
+        guild: GuildId,
+        channel: ChannelId,
+        random_timeout: bool,
+    ) {
+        info!("{:?}", random_timeout);
+        let mut conf = self.guild_configurations.write().await;
+        conf.entry(guild)
+            .or_default()
+            .set_random_timeout(channel, random_timeout);
+    }
+
     /// Get's a random post according to the configuration of the given channel
     /// inside the given guild
     #[instrument(skip(self))]

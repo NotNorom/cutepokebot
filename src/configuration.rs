@@ -37,6 +37,14 @@ impl GuildConfiguration {
         self.channels.entry(channel).or_default().timeout = timeout;
     }
 
+    pub fn random_timeout(&self, channel: &ChannelId) -> Option<bool> {
+        self.channels.get(channel).map(|c| c.random_timeout)
+    }
+
+    pub fn set_random_timeout(&mut self, channel: ChannelId, random_timeout: bool) {
+        self.channels.entry(channel).or_default().random_timeout = random_timeout;
+    }
+
     pub fn nsfw_mode(&self, channel: &ChannelId) -> Option<NsfwMode> {
         self.channels.get(channel).map(|c| c.nsfw_mode)
     }

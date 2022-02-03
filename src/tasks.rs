@@ -6,6 +6,7 @@ use crate::{
 };
 use futures::stream::StreamExt;
 use poise::serenity_prelude::{ChannelId, GuildId, InteractionResponseType, RwLock, UserId};
+use rand::Rng;
 use tracing::{error, info, instrument};
 
 /// Starts the loop for a channel in a guild
@@ -101,12 +102,18 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
             }
         }
 
-        let timeout_minutes = data.timeout(guild, channel).await;
+        let timeout_minutes = data.timeout(guild, channel).await.unwrap_or(40);
 
-        let sleep_duration = match timeout_minutes {
-            Some(timeout_minutes) => Duration::from_secs(timeout_minutes * 60),
-            None => Duration::from_secs(40 * 60),
+        let sleep_duration = if data.random_timeout(guild, channel).await.unwrap_or(false) {
+            let lower_limit = 3 * 60;
+            let upper_limit = timeout_minutes;
+
+            let mut rng = rand::thread_rng();
+            Duration::from_secs(rng.gen_range(lower_limit..=upper_limit))
+        } else {
+            Duration::from_secs(timeout_minutes)
         };
+
         tokio::time::sleep(sleep_duration).await;
     }
 }
