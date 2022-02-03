@@ -1,9 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{
-        atomic::{AtomicU64, Ordering},
-        Arc,
-    },
+    sync::Arc,
 };
 
 use poise::{
@@ -13,7 +10,7 @@ use poise::{
 use rs621::{client::Client, post::Post};
 
 use crate::{
-    configuration::{ChannelConfiguration, GuildConfiguration},
+    configuration::GuildConfiguration,
     tasks::poke_loop,
     utils::NsfwMode,
 };
@@ -22,8 +19,6 @@ use crate::{
 pub struct Data {
     /// configurations for all known guilds
     guild_configurations: Arc<RwLock<HashMap<GuildId, GuildConfiguration>>>,
-    /// timeout in minutes
-    timeout: Arc<AtomicU64>,
     /// nsfw client
     e621_client: Arc<Client>,
     /// sfw client
@@ -38,8 +33,6 @@ impl Data {
 
         Ok(Self {
             guild_configurations: Arc::new(RwLock::new(HashMap::new())),
-            // 40 minutes as the default timeout
-            timeout: Arc::new(AtomicU64::new(40)),
             e621_client: Arc::new(Client::new("https://e621.net", &user_agent)?),
             e926_client: Arc::new(Client::new("https://e926.net", &user_agent)?),
             context,
@@ -66,13 +59,15 @@ impl Data {
     }
 
     /// Get the data's timeout.
-    pub fn timeout(&self) -> u64 {
-        self.timeout.load(Ordering::Relaxed)
+    pub async fn timeout(&self, guild: GuildId, channel: ChannelId) -> Option<u64> {
+        let conf = self.guild_configurations.read().await;
+        conf.get(&guild).map(|c| c.timeout(&channel)).flatten()
     }
 
     /// Set the data's timeout.
-    pub fn set_timeout(&self, timeout: u64) {
-        self.timeout.store(timeout, Ordering::Relaxed);
+    pub async fn set_timeout(&self, guild: GuildId, channel: ChannelId, timeout: u64) {
+        let mut conf = self.guild_configurations.write().await;
+        conf.entry(guild).or_default().set_timeout(channel, timeout);
     }
 
     /// Get the tags for a channel in a guild

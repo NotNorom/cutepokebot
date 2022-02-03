@@ -71,7 +71,12 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
             }
         }
 
-        let timeout_minutes = data.timeout();
-        tokio::time::sleep(Duration::from_secs(timeout_minutes * 60)).await;
+        let timeout_minutes = data.timeout(guild, channel).await;
+
+        let sleep_duration = match timeout_minutes {
+            Some(timeout_minutes) => Duration::from_secs(timeout_minutes * 60),
+            None => Duration::from_secs(40 * 60),
+        };
+        tokio::time::sleep(sleep_duration).await;
     }
 }
