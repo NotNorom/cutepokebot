@@ -2,7 +2,7 @@ use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use crate::{
     utils::{embed_from_post, post_buttons, NsfwMode},
-    Data,
+    Data, constants::MINIMUM_TIMEOUT_MINUTES,
 };
 use futures::stream::StreamExt;
 use poise::serenity_prelude::{ChannelId, GuildId, InteractionResponseType, RwLock, UserId};
@@ -63,7 +63,7 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
 
                     while let Some(interaction) = message
                         .await_component_interactions(&ctx)
-                        .timeout(Duration::from_secs(40 * 60))
+                        .timeout(Duration::from_secs(10 * 60))
                         .await
                         .next()
                         .await
@@ -105,7 +105,7 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
         let timeout_minutes = data.timeout(guild, channel).await.unwrap_or(40);
 
         let sleep_duration = if data.random_timeout(guild, channel).await.unwrap_or(false) {
-            let lower_limit = 3 * 60;
+            let lower_limit = MINIMUM_TIMEOUT_MINUTES;
             let upper_limit = timeout_minutes;
 
             let mut rng = rand::thread_rng();

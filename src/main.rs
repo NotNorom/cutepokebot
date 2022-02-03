@@ -2,6 +2,7 @@ use tracing::instrument;
 
 mod commands;
 mod configuration;
+mod constants;
 mod setup;
 mod tasks;
 mod utils;

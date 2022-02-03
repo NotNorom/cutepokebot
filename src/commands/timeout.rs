@@ -1,6 +1,6 @@
 use poise::{send_reply, serenity_prelude::ChannelId};
 
-use crate::{Context, Error};
+use crate::{constants::MINIMUM_TIMEOUT_MINUTES, Context, Error};
 
 /// Gets or sets the timeout for the channel in the guild
 #[poise::command(prefix_command, slash_command, owners_only)]
@@ -15,8 +15,8 @@ pub async fn timeout(
     let current_timeout = ctx.data().timeout(guild, channel).await;
 
     let content = if let Some(new_timeout) = timeout {
-        if new_timeout <= 3 {
-            "Timeout must be greater than 3".to_string()
+        if new_timeout <= MINIMUM_TIMEOUT_MINUTES {
+            format!("Timeout must be greater than {}", MINIMUM_TIMEOUT_MINUTES)
         } else if let Some(current_timeout) = current_timeout {
             ctx.data().set_timeout(guild, channel, new_timeout).await;
             format!(
