@@ -21,23 +21,18 @@ pub struct Data {
     guild_configurations: Arc<RwLock<HashMap<GuildId, GuildConfiguration>>>,
     /// timeout in minutes
     timeout: Arc<AtomicU64>,
-    /// the tags which to search for
-    tags: Arc<RwLock<Vec<String>>>,
+
+    
 }
 
 impl Data {
-    fn new<T, S>(tags: T) -> Self
-    where
-        T: IntoIterator<Item = S>,
-        S: Into<String>,
-    {
-        let tags = tags.into_iter().map(|s| s.into()).collect();
+    fn new() -> Self {
         Self {
             channels: Arc::new(RwLock::new(HashMap::new())),
             guild_configurations: Arc::new(RwLock::new(HashMap::new())),
             // 40 minutes as the default timeout
             timeout: Arc::new(AtomicU64::new(40)),
-            tags: Arc::new(RwLock::new(tags)),
+            
         }
     }
 
@@ -68,9 +63,19 @@ impl Data {
         self.timeout.store(timeout, Ordering::Relaxed);
     }
 
-    /// Get an arc to the data's tags.
-    pub fn tags(&self) -> Arc<RwLock<Vec<String>>> {
-        self.tags.clone()
+    /// Get the tags for a channel in a guild
+    pub async fn tags(&self, guild: GuildId, channel: ChannelId) -> Option<Vec<String>> {
+        let conf = self.guild_configurations.read().await;
+        conf.get(&guild)
+            .map(|c| c.tags(&channel).cloned())
+            .flatten()
+    }
+
+    /// Set the tags for a channel in a guild
+    pub async fn set_tags(&self, guild: GuildId, channel: ChannelId, tags: Vec<String>) {
+        let mut conf = self.guild_configurations.write().await;
+        conf.entry(guild).and_modify(|c| c.set_tags(channel, tags));
+    }
     }
 }
 
@@ -79,36 +84,9 @@ pub async fn setup<U, E>(
     _ready: &Ready,
     _framework: &Framework<U, E>,
 ) -> Result<crate::Data, crate::Error> {
-    let data = Data::new([
-        "pokémon_(species)",
-        "-abs",
-        "-blob(disambiguation)",
-        "-breasts",
-        "-butt",
-        "-card_game",
-        "-comic",
-        "-diaper",
-        "-dominatrix",
-        "-expansion",
-        "-foot_focus",
-        "-gore",
-        "-human",
-        "-inflation",
-        "-model_sheet",
-        "-muscular",
-        "-nightmare_fuel",
-        "-nipples",
-        "-overweight",
-        "-pokémorph",
-        "-pregnant",
-        "-seductive",
-        "-thick_thighs",
-        "-transformation",
-        "-vore",
-        "score:>55",
-    ]);
+    let data = Data::new();
 
-    tokio::spawn(poke_loop(context.http.clone(), data.clone()));
+    tokio::spawn(poke_loop(context.clone(), data.clone()));
 
     Ok(data)
 }
