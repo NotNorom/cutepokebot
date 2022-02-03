@@ -2,8 +2,12 @@ use poise::{send_reply, serenity_prelude::ChannelId};
 
 use crate::{Context, Error};
 
-/// Gets or sets the timeout
-#[poise::command(prefix_command, slash_command, owners_only)]
+/// Gets or sets the tags for the channel
+#[poise::command(
+    prefix_command,
+    slash_command,
+    required_permissions = "MANAGE_CHANNELS"
+)]
 pub async fn tags(
     ctx: Context<'_>,
     #[description = "Selected channel"] channel: Option<ChannelId>,
@@ -33,12 +37,10 @@ pub async fn tags(
         ctx.data().set_tags(guild, channel, new_tags).await;
 
         content
+    } else if let Some(current_tags) = current_tags {
+        current_tags.join(" ")
     } else {
-        if let Some(current_tags) = current_tags {
-            current_tags.join(" ")
-        } else {
-            "Tags are not set.\n".to_string()
-        }
+        "Tags are not set.\n".to_string()
     };
 
     send_reply(ctx, |f| f.content(content).ephemeral(true)).await?;

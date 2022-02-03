@@ -1,8 +1,11 @@
-use poise::{send_reply, serenity_prelude::ChannelId};
+use poise::{
+    send_reply,
+    serenity_prelude::{ChannelId, MessageBuilder},
+};
 
 use crate::{Context, Error};
 
-/// Display your or another user's account creation date
+/// Stops sending pokemon
 #[poise::command(
     prefix_command,
     slash_command,
@@ -10,13 +13,16 @@ use crate::{Context, Error};
 )]
 pub async fn stop(
     ctx: Context<'_>,
-    #[description = "Stop posting images in channel"] channel: Option<ChannelId>,
+    #[description = "Channel to stop"] channel: Option<ChannelId>,
 ) -> Result<(), Error> {
     let guild = ctx.guild_id().ok_or("Command must be run in server")?;
     let channel = channel.unwrap_or_else(|| ctx.channel_id());
 
     send_reply(ctx, |f| {
-        let content = "This server will no longer receive pokemon.";
+        let content = MessageBuilder::new()
+            .channel(channel)
+            .push(" will no longer receive pokemon.")
+            .build();
         f.content(content).ephemeral(true)
     })
     .await?;
