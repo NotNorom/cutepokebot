@@ -65,7 +65,6 @@ impl Data {
     }
 
     /// Returns true if a configuration for the channel in the guild is available
-    #[instrument(skip(self))]
     pub async fn config_available(&self, guild: GuildId, channel: ChannelId) -> bool {
         let conf = self.guild_configurations.read().await;
         let available = match conf.get(&guild) {
@@ -77,7 +76,6 @@ impl Data {
     }
 
     /// Get the data's timeout.
-    #[instrument(skip(self))]
     pub async fn timeout(&self, guild: GuildId, channel: ChannelId) -> Option<u64> {
         let conf = self.guild_configurations.read().await;
         let timeout = conf.get(&guild).map(|c| c.timeout(&channel)).flatten();
@@ -86,7 +84,6 @@ impl Data {
     }
 
     /// Set the data's timeout.
-    #[instrument(skip(self))]
     pub async fn set_timeout(&self, guild: GuildId, channel: ChannelId, timeout: u64) {
         info!("{:?} minutes", timeout);
         let mut conf = self.guild_configurations.write().await;
@@ -94,7 +91,6 @@ impl Data {
     }
 
     /// Get the tags for a channel in a guild
-    #[instrument(skip(self))]
     pub async fn tags(&self, guild: GuildId, channel: ChannelId) -> Option<Vec<String>> {
         let conf = self.guild_configurations.read().await;
         let tags = conf
@@ -106,7 +102,6 @@ impl Data {
     }
 
     /// Set the tags for a channel in a guild
-    #[instrument(skip(self))]
     pub async fn set_tags(&self, guild: GuildId, channel: ChannelId, tags: Vec<String>) {
         info!("{:?}", tags);
         let mut conf = self.guild_configurations.write().await;
@@ -114,7 +109,6 @@ impl Data {
     }
 
     /// Get the nsfw_mode for a channel in a guild
-    #[instrument(skip(self))]
     pub async fn nsfw_mode(&self, guild: GuildId, channel: ChannelId) -> Option<NsfwMode> {
         let conf = self.guild_configurations.read().await;
         let nsfw_mode = conf.get(&guild).map(|c| c.nsfw_mode(&channel)).flatten();
@@ -123,7 +117,6 @@ impl Data {
     }
 
     /// Set the nsfw_mode for a channel in a guild
-    #[instrument(skip(self))]
     pub async fn set_nsfw_mode(&self, guild: GuildId, channel: ChannelId, nsfw_mode: NsfwMode) {
         info!("{:?}", nsfw_mode);
         let mut conf = self.guild_configurations.write().await;
@@ -176,10 +169,11 @@ impl Data {
             None => return None,
         };
 
-        info!("{:?}", post);
-
         match post {
-            Ok(post) => Some(post),
+            Ok(post) => {
+                info!(post_id = post.id);
+                Some(post)
+            }
             Err(err) => {
                 error!("{:?}", err);
                 None

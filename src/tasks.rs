@@ -26,9 +26,9 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
                     guild, channel, nsfw_mode, tags
                 );
                 let content = if let Some(NsfwMode::NSFW) = nsfw_mode {
-                    format!("There is no post matching the tags.")
+                    "There is no post matching the tags."
                 } else {
-                    format!("There is no post matching the tags. Nsfw-mode is set to sfw, try setting nsfw-mode to nsfw.")
+                    "There is no post matching the tags. Nsfw-mode is set to sfw, try setting nsfw-mode to nsfw."
                 };
 
                 let _ = channel.say(&discord_http, content).await;
