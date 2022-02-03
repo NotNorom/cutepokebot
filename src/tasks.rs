@@ -36,7 +36,15 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
                     "Posting {:?} in guild {} in channel {}",
                     post.id, guild, channel
                 );
-                let embed = embed_from_post(&post).expect("Embed creation shall not fail!");
+                let embed = match embed_from_post(&post) {
+                    Ok(embed) => embed,
+                    Err(err) => {
+                        let error_message = format!("Error: {}. Stopping for this channel", err);
+                        eprintln!("{}", &error_message);
+                        let _ = channel.say(&discord_http, error_message).await;
+                        break
+                    },
+                };
                 let ctx = data.context().clone();
                 tokio::spawn(async move {
                     let message = channel
