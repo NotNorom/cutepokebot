@@ -25,18 +25,22 @@ pub struct Data {
     guild_configurations: Arc<RwLock<HashMap<GuildId, GuildConfiguration>>>,
     /// timeout in minutes
     timeout: Arc<AtomicU64>,
-
-    
+    /// nsfw client
+    e621_client: Arc<Client>,
+    /// sfw client
+    e926_client: Arc<Client>,
 }
 
 impl Data {
     fn new() -> Self {
+        let user_agent = "CutePokebot/0.1.0 (norom)";
+
         Self {
-            channels: Arc::new(RwLock::new(HashMap::new())),
             guild_configurations: Arc::new(RwLock::new(HashMap::new())),
             // 40 minutes as the default timeout
             timeout: Arc::new(AtomicU64::new(40)),
-            
+            e621_client: Arc::new(Client::new("https://e621.net", &user_agent).unwrap()),
+            e926_client: Arc::new(Client::new("https://e926.net", &user_agent).unwrap()),
         }
     }
 
