@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 dotenv = "0.15.0"
+futures = "0.3.19"
 poise = { git = "https://github.com/kangalioo/poise", features = ["collector"] }
 rs621 = "0.7.0-alpha"
 tokio = { version = "1.16.1", features = ["rt-multi-thread"] }
