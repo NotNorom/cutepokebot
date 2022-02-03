@@ -25,7 +25,7 @@ impl GuildConfiguration {
         self.channels.remove(channel);
     }
 
-    pub fn has_channel(&self, channel: &ChannelId) -> bool{
+    pub fn has_channel(&self, channel: &ChannelId) -> bool {
         self.channels.contains_key(channel)
     }
 
@@ -103,7 +103,7 @@ impl Default for ChannelConfiguration {
 }
 
 impl ChannelConfiguration {
-    /// Ff tags is None, use default list of tags (cute pokemon)
+    /// If tags is None, use default list of tags (cute pokemon)
     pub fn new(timeout: u64, nsfw_mode: NsfwMode, tags: Option<Vec<String>>) -> Self {
         match tags {
             Some(tags) => Self {

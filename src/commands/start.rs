@@ -5,7 +5,7 @@ use poise::{
 
 use crate::{Context, Error};
 
-/// Display your or another user's account creation date
+/// Start posting images in the channel
 #[poise::command(
     prefix_command,
     slash_command,
@@ -22,7 +22,7 @@ pub async fn start(
         let content = MessageBuilder::new()
             .push("Channel ")
             .channel(channel)
-            .push(" will receive pokemon.")
+            .push(" will receive images.")
             .build();
 
         f.content(content).ephemeral(true)

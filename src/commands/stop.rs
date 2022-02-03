@@ -5,7 +5,7 @@ use poise::{
 
 use crate::{Context, Error};
 
-/// Stops sending pokemon
+/// Stop sending images 
 #[poise::command(
     prefix_command,
     slash_command,
@@ -21,7 +21,7 @@ pub async fn stop(
     send_reply(ctx, |f| {
         let content = MessageBuilder::new()
             .channel(channel)
-            .push(" will no longer receive pokemon.")
+            .push(" will no longer receive images.")
             .build();
         f.content(content).ephemeral(true)
     })
