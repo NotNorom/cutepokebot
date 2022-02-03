@@ -1,22 +1,19 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use poise::serenity_prelude::ChannelId;
+use poise::serenity_prelude::{ChannelId, RoleId};
 
 use crate::utils::NsfwMode;
 
 #[non_exhaustive]
 #[derive(Debug, Clone, Default)]
 pub struct GuildConfiguration {
+    /// channel specific configurations
     channels: HashMap<ChannelId, ChannelConfiguration>,
+    /// roles which are allowed to use the bot
+    moderator_roles: HashSet<RoleId>,
 }
 
 impl GuildConfiguration {
-    pub fn new() -> Self {
-        Self {
-            ..Default::default()
-        }
-    }
-
     pub fn add_channel(&mut self, channel: ChannelId) {
         self.channels.entry(channel).or_default();
     }
@@ -65,16 +62,22 @@ impl GuildConfiguration {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ChannelConfiguration {
+    /// True if the posting loop is running
+    active: bool,
+    /// Timeout in minutes
     timeout: u64,
     /// True if timeout should be interpreted as a maximum timeout
     random_timeout: bool,
+    /// If the query should return sfw or nsfw posts
     nsfw_mode: NsfwMode,
+    /// The tags to search for
     tags: Vec<String>,
 }
 
 impl Default for ChannelConfiguration {
     fn default() -> Self {
         Self {
+            active: false,
             timeout: 40,
             random_timeout: false,
             nsfw_mode: NsfwMode::SFW,
@@ -109,54 +112,6 @@ impl Default for ChannelConfiguration {
             .into_iter()
             .map(|s| s.to_string())
             .collect(),
-        }
-    }
-}
-
-impl ChannelConfiguration {
-    /// If tags is None, use default list of tags (cute pokemon)
-    pub fn new(timeout: u64, nsfw_mode: NsfwMode, tags: Option<Vec<String>>) -> Self {
-        match tags {
-            Some(tags) => Self {
-                timeout,
-                nsfw_mode,
-                tags,
-            },
-            None => Self {
-                timeout,
-                nsfw_mode,
-                tags: vec![
-                    "pokémon_(species)",
-                    "-abs",
-                    "-blob(disambiguation)",
-                    "-breasts",
-                    "-butt",
-                    "-card_game",
-                    "-comic",
-                    "-diaper",
-                    "-dominatrix",
-                    "-expansion",
-                    "-foot_focus",
-                    "-gore",
-                    "-human",
-                    "-inflation",
-                    "-model_sheet",
-                    "-muscular",
-                    "-nightmare_fuel",
-                    "-nipples",
-                    "-overweight",
-                    "-pokémorph",
-                    "-pregnant",
-                    "-seductive",
-                    "-thick_thighs",
-                    "-transformation",
-                    "-vore",
-                    "score:>5",
-                ]
-                .into_iter()
-                .map(|s| s.to_string())
-                .collect(),
-            },
         }
     }
 }
