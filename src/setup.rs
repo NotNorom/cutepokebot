@@ -41,9 +41,14 @@ impl Data {
     }
 
     /// Add channel for receiving pokemon
-    pub async fn add(&self, guild: GuildId, channel: ChannelId) {
-        let mut channels = self.channels.write().await;
-        channels.insert(guild, channel);
+    pub async fn start(&self, guild: GuildId, channel: ChannelId, config: ChannelConfiguration) {
+        let mut guild_config = self.guild_configurations.write().await;
+        guild_config
+            .entry(guild)
+            .or_default()
+            .add_channel(channel, config);
+
+        let handle = tokio::spawn(async move {});
     }
 
     /// Remove channel (inside the guild) to receive pokemon
