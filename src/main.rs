@@ -23,6 +23,7 @@ async fn main() {
                 commands::start::start(),
                 commands::stop::stop(),
                 commands::tags::tags(),
+                commands::nsfw::nsfw(),
                 commands::timeout::timeout(),
             ],
             ..Default::default()
