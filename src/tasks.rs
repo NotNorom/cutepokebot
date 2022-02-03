@@ -1,11 +1,15 @@
-use std::time::Duration;
-
-use poise::serenity_prelude::{ChannelId, GuildId, UserId};
+use std::{
+    collections::HashSet,
+    sync::{Arc, RwLock},
+    time::Duration,
+};
 
 use crate::{
     utils::{embed_from_post, post_buttons},
     Data,
 };
+use futures::stream::StreamExt;
+use poise::serenity_prelude::{ChannelId, GuildId, UserId};
 
 /// Starts the loop for a channel in a guild
 pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
@@ -44,18 +48,25 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
                             m.set_embed(embed.clone())
                                 .components(|c| c.add_action_row(post_buttons()))
                         })
-                        .await;
-
-                    // TODO: Figure out how to do component interactions correctly
-                    let _res = match message
-                        .unwrap()
-                        .await_component_interaction(&ctx)
-                        .timeout(Duration::from_secs(40 * 60))
                         .await
-                    {
-                        Some(ci) => ci,
-                        None => return,
-                    };
+                        .unwrap();
+
+                    let interaction_authors = Arc::new(RwLock::new(HashSet::<UserId>::new()));
+
+                    // TODO: Make this not blocking
+                    let collector = message
+                        .await_component_interactions(&ctx)
+                        .collect_limit(4)
+                        .filter(move |m_ic| {
+                            let arc = interaction_authors.clone();
+                            let mut authors = arc.write().unwrap();
+                            authors.insert(m_ic.user.id)
+                        })
+                        .timeout(Duration::from_secs(40 * 60))
+                        .await;
+                    if collector.count().await == 4 {
+                        let _ = message.delete(&ctx).await;
+                    }
                 });
             }
         }
