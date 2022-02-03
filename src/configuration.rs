@@ -29,12 +29,12 @@ impl GuildConfiguration {
         self.channels.contains_key(channel)
     }
 
-    pub fn tags(&self, channel: &ChannelId) -> Option<&Vec<String>> {
-        self.channels.get(channel).map(|c| &c.tags)
+    pub fn timeout(&self, channel: &ChannelId) -> Option<u64> {
+        self.channels.get(channel).map(|c| c.timeout)
     }
 
-    pub fn set_tags(&mut self, channel: ChannelId, tags: Vec<String>) {
-        self.channels.entry(channel).or_default().tags = tags;
+    pub fn set_timeout(&mut self, channel: ChannelId, timeout: u64) {
+        self.channels.entry(channel).or_default().timeout = timeout;
     }
 
     pub fn nsfw_mode(&self, channel: &ChannelId) -> Option<NsfwMode> {
@@ -45,12 +45,12 @@ impl GuildConfiguration {
         self.channels.entry(channel).or_default().nsfw_mode = nsfw_mode;
     }
 
-    pub fn timeout(&self, channel: &ChannelId) -> Option<u64> {
-        self.channels.get(channel).map(|c| c.timeout)
+    pub fn tags(&self, channel: &ChannelId) -> Option<&Vec<String>> {
+        self.channels.get(channel).map(|c| &c.tags)
     }
 
-    pub fn set_timeout(&mut self, channel: ChannelId, timeout: u64) {
-        self.channels.entry(channel).or_default().timeout = timeout;
+    pub fn set_tags(&mut self, channel: ChannelId, tags: Vec<String>) {
+        self.channels.entry(channel).or_default().tags = tags;
     }
 }
 
