@@ -1,8 +1,9 @@
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use crate::{
+    constants::MINIMUM_TIMEOUT_MINUTES,
     utils::{embed_from_post, post_buttons, NsfwMode},
-    Data, constants::MINIMUM_TIMEOUT_MINUTES,
+    Data,
 };
 use futures::stream::StreamExt;
 use poise::serenity_prelude::{ChannelId, GuildId, InteractionResponseType, RwLock, UserId};
@@ -109,11 +110,11 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
             let upper_limit = timeout_minutes;
 
             let mut rng = rand::thread_rng();
-            Duration::from_secs(rng.gen_range(lower_limit..=upper_limit))
+            rng.gen_range(lower_limit..=upper_limit)
         } else {
-            Duration::from_secs(timeout_minutes)
+            timeout_minutes
         };
 
-        tokio::time::sleep(sleep_duration).await;
+        tokio::time::sleep(Duration::from_secs(sleep_duration * 60)).await;
     }
 }
