@@ -98,20 +98,9 @@ pub async fn delete_button_listener(ctx: Context) {
     let mut authors = HashMap::<MessageId, HashSet<UserId>>::new();
     while let Some(interaction) = collector.next().await {
         let authors_of_message = authors.entry(interaction.message.id).or_default();
-        if authors_of_message.len() >= 4 {
-            if let Err(err) = ctx
-                .http
-                .delete_message(interaction.channel_id.0, interaction.message.id.0)
-                .await
-            {
-                error!("Error deleting original interaction response: {}", err)
-            } else {
-                info!("Deleted message in {}", interaction.channel_id);
-            }
-        }
         if authors_of_message.insert(interaction.user.id) {
             if let Err(err) = interaction
-                .create_interaction_response(&ctx, |resp| {
+                .create_interaction_response(&ctx.http, |resp| {
                     resp.kind(InteractionResponseType::UpdateMessage)
                         .interaction_response_data(|resp_data| {
                             resp_data.components(|c| {
@@ -121,7 +110,18 @@ pub async fn delete_button_listener(ctx: Context) {
                 })
                 .await
             {
-                error!("{}", err);
+                error!("Error updating original interaction response: {}", err);
+            }
+        }
+        if authors_of_message.len() >= 4 {
+            if let Err(err) = ctx
+                .http
+                .delete_message(interaction.channel_id.0, interaction.message.id.0)
+                .await
+            {
+                error!("Error deleting original interaction response: {}", err)
+            } else {
+                info!("Deleted message in {}", interaction.channel_id);
             }
         }
     }
