@@ -123,6 +123,7 @@ pub async fn delete_button_listener(ctx: Context) {
             } else {
                 info!("Deleted message in {}", interaction.channel_id);
             }
+            authors.remove(&interaction.message.id);
         }
     }
 }
