@@ -88,6 +88,7 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
 }
 
 /// listens for delete button clicks on image posts
+#[instrument(skip(ctx))]
 pub async fn delete_button_listener(ctx: Context) {
     let mut collector = ComponentInteractionCollectorBuilder::new(&ctx)
         .filter(|interaction| interaction.data.custom_id == "delete-post")
@@ -97,12 +98,18 @@ pub async fn delete_button_listener(ctx: Context) {
     while let Some(interaction) = collector.next().await {
         let authors_of_message = authors.entry(interaction.message.id).or_default();
         if authors_of_message.len() >= 4 {
-            let _ = interaction.delete_original_interaction_response(&ctx).await;
-            info!("Deleted message in {}", interaction.channel_id);
+            if let Err(err) = interaction
+                .delete_original_interaction_response(&ctx.http)
+                .await
+            {
+                error!("Error deleting original interaction response: {}", err)
+            } else {
+                info!("Deleted message in {}", interaction.channel_id);
+            }
         }
         if authors_of_message.insert(interaction.user.id) {
             if let Err(err) = interaction
-                .edit_original_interaction_response(&ctx, |msg| {
+                .edit_original_interaction_response(&ctx.http, |msg| {
                     msg.components(|c| {
                         c.set_action_rows(vec![post_buttons(authors_of_message.len(), 4)])
                     })
