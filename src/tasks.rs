@@ -11,7 +11,8 @@ use crate::{
 
 use futures::stream::StreamExt;
 use poise::serenity_prelude::{
-    ChannelId, ComponentInteractionCollectorBuilder, Context, GuildId, MessageId, UserId,
+    ChannelId, ComponentInteractionCollectorBuilder, Context, GuildId, InteractionResponseType,
+    MessageId, UserId,
 };
 use rand::Rng;
 use tracing::{error, info, instrument};
@@ -98,8 +99,9 @@ pub async fn delete_button_listener(ctx: Context) {
     while let Some(interaction) = collector.next().await {
         let authors_of_message = authors.entry(interaction.message.id).or_default();
         if authors_of_message.len() >= 4 {
-            if let Err(err) = interaction
-                .delete_original_interaction_response(&ctx.http)
+            if let Err(err) = ctx
+                .http
+                .delete_message(interaction.channel_id.0, interaction.message.id.0)
                 .await
             {
                 error!("Error deleting original interaction response: {}", err)
@@ -109,10 +111,13 @@ pub async fn delete_button_listener(ctx: Context) {
         }
         if authors_of_message.insert(interaction.user.id) {
             if let Err(err) = interaction
-                .edit_original_interaction_response(&ctx.http, |msg| {
-                    msg.components(|c| {
-                        c.set_action_rows(vec![post_buttons(authors_of_message.len(), 4)])
-                    })
+                .create_interaction_response(&ctx, |resp| {
+                    resp.kind(InteractionResponseType::UpdateMessage)
+                        .interaction_response_data(|resp_data| {
+                            resp_data.components(|c| {
+                                c.set_action_rows(vec![post_buttons(authors_of_message.len(), 4)])
+                            })
+                        })
                 })
                 .await
             {
