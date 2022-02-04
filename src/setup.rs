@@ -7,7 +7,11 @@ use poise::{
 use rs621::{client::Client, post::Post};
 use tracing::{debug, error, info, instrument};
 
-use crate::{configuration::GuildConfiguration, tasks::poke_loop, utils::NsfwMode};
+use crate::{
+    configuration::GuildConfiguration,
+    tasks::{delete_button_listener, poke_loop},
+    utils::NsfwMode,
+};
 
 #[derive(Clone)]
 pub struct Data {
@@ -195,5 +199,7 @@ pub async fn setup<U, E>(
     _ready: &Ready,
     _framework: &Framework<U, E>,
 ) -> Result<crate::Data, crate::Error> {
-    Ok(Data::new(context.clone())?)
+    let data = Data::new(context.clone())?;
+    let _ = tokio::spawn(delete_button_listener(context.clone()));
+    Ok(data)
 }

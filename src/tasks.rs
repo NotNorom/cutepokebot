@@ -1,12 +1,18 @@
-use std::{collections::HashSet, sync::Arc, time::Duration};
+use std::{
+    collections::{HashMap, HashSet},
+    time::Duration,
+};
 
 use crate::{
-    constants::{MAXIMUM_INETERACTION_TIME, MINIMUM_TIMEOUT_MINUTES},
+    constants::MINIMUM_TIMEOUT_MINUTES,
     utils::{embed_from_post, post_buttons, NsfwMode},
     Data,
 };
+
 use futures::stream::StreamExt;
-use poise::serenity_prelude::{ChannelId, GuildId, InteractionResponseType, RwLock, UserId};
+use poise::serenity_prelude::{
+    ChannelId, ComponentInteractionCollectorBuilder, Context, GuildId, MessageId, UserId,
+};
 use rand::Rng;
 use tracing::{error, info, instrument};
 
@@ -50,53 +56,15 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
                 };
                 let ctx = data.context().clone();
                 tokio::spawn(async move {
-                    let mut message = channel
+                    if let Err(err) = channel
                         .send_message(&ctx, |m| {
                             m.set_embed(embed.clone())
                                 .components(|c| c.add_action_row(post_buttons(0, 4)))
                         })
                         .await
-                        .unwrap();
-
-                    info!("Sent message. Waiting for interactions");
-
-                    let interaction_authors = Arc::new(RwLock::new(HashSet::<UserId>::new()));
-
-                    let mut collector = message
-                        .await_component_interactions(&ctx)
-                        .timeout(Duration::from_secs(MAXIMUM_INETERACTION_TIME * 60))
-                        .await;
-
-                    while let Some(interaction) = collector.next().await {
-                        info!("Received interaction: {:?}", interaction);
-                        let arc = interaction_authors.clone();
-                        let mut authors = arc.write().await;
-                        if authors.len() >= 4 {
-                            let _ = interaction.delete_original_interaction_response(&ctx).await;
-                            info!(
-                                "Original message is deleted. No longer waiting for interactions"
-                            );
-                            break;
-                        }
-                        authors.insert(interaction.user.id);
-
-                        let _ = interaction
-                            .create_interaction_response(&ctx, |response| {
-                                response
-                                    .kind(InteractionResponseType::UpdateMessage)
-                                    .interaction_response_data(|c| {
-                                        c.components(|com| {
-                                            com.set_action_rows(vec![post_buttons(
-                                                authors.len(),
-                                                4,
-                                            )])
-                                        })
-                                    })
-                            })
-                            .await;
-                        info!("Interaction response sent");
-                    }
-                    let _ = message.edit(&ctx, |msg| msg.components(|c| c)).await;
+                    {
+                        error!("{}", err);
+                    };
                 });
             }
         }
@@ -116,5 +84,33 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
         info!("Waiting for {} minutes for the next post", sleep_duration);
 
         tokio::time::sleep(Duration::from_secs(sleep_duration * 60)).await;
+    }
+}
+
+/// listens for delete button clicks on image posts
+pub async fn delete_button_listener(ctx: Context) {
+    let mut collector = ComponentInteractionCollectorBuilder::new(&ctx)
+        .filter(|interaction| interaction.data.custom_id == "delete-post")
+        .await;
+
+    let mut authors = HashMap::<MessageId, HashSet<UserId>>::new();
+    while let Some(interaction) = collector.next().await {
+        let authors_of_message = authors.entry(interaction.message.id).or_default();
+        if authors_of_message.len() >= 4 {
+            let _ = interaction.delete_original_interaction_response(&ctx).await;
+            info!("Deleted message in {}", interaction.channel_id);
+        }
+        if authors_of_message.insert(interaction.user.id) {
+            if let Err(err) = interaction
+                .edit_original_interaction_response(&ctx, |msg| {
+                    msg.components(|c| {
+                        c.set_action_rows(vec![post_buttons(authors_of_message.len(), 4)])
+                    })
+                })
+                .await
+            {
+                error!("{}", err);
+            }
+        }
     }
 }
