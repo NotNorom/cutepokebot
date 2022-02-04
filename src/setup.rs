@@ -40,10 +40,27 @@ impl Data {
     fn new(context: Context) -> Result<Self, crate::Error> {
         let user_agent = "CutePokebot/0.1.0 (norom)";
 
+        let (e6_client, e9_client) =
+            if let (Ok(login), Ok(token)) = (dotenv::var("E6_LOGIN"), dotenv::var("E6_TOKEN")) {
+                info!("Using logged in clients with user {}", &login);
+                let mut e6_client = Client::new("https://e621.net", &user_agent)?;
+                e6_client.login(login.clone(), token.clone());
+
+                let mut e9_client = Client::new("https://e926.net", &user_agent)?;
+                e9_client.login(login, token);
+                (e6_client, e9_client)
+            } else {
+                info!("Using logged out clients");
+                (
+                    Client::new("https://e621.net", &user_agent)?,
+                    Client::new("https://e926.net", &user_agent)?,
+                )
+            };
+
         Ok(Self {
             guild_configurations: Arc::new(RwLock::new(HashMap::new())),
-            e621_client: Arc::new(Client::new("https://e621.net", &user_agent)?),
-            e926_client: Arc::new(Client::new("https://e926.net", &user_agent)?),
+            e621_client: Arc::new(e6_client),
+            e926_client: Arc::new(e9_client),
             context,
         })
     }
