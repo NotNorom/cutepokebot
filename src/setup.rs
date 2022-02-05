@@ -1,7 +1,8 @@
-use std::{collections::HashMap, fmt::Debug, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 
+use dashmap::DashMap;
 use poise::{
-    serenity_prelude::{ChannelId, Context, GuildId, Ready, RwLock},
+    serenity_prelude::{ChannelId, Context, GuildId, Ready},
     Framework,
 };
 use rs621::{client::Client, post::Post};
@@ -16,7 +17,7 @@ use crate::{
 #[derive(Clone)]
 pub struct Data {
     /// configurations for all known guilds
-    guild_configurations: Arc<RwLock<HashMap<GuildId, GuildConfiguration>>>,
+    guild_configurations: Arc<DashMap<GuildId, GuildConfiguration>>,
     /// nsfw client
     e621_client: Arc<Client>,
     /// sfw client
@@ -58,7 +59,7 @@ impl Data {
             };
 
         Ok(Self {
-            guild_configurations: Arc::new(RwLock::new(HashMap::new())),
+            guild_configurations: Arc::new(DashMap::new()),
             e621_client: Arc::new(e6_client),
             e926_client: Arc::new(e9_client),
             context,
@@ -68,8 +69,10 @@ impl Data {
     /// Add channel for receiving pokemon
     #[instrument(skip(self))]
     pub async fn start(&self, guild: GuildId, channel: ChannelId) {
-        let mut guild_config = self.guild_configurations.write().await;
-        guild_config.entry(guild).or_default().add_channel(channel);
+        self.guild_configurations
+            .entry(guild)
+            .or_default()
+            .add_channel(channel);
 
         let _handle = tokio::spawn(poke_loop(self.clone(), guild, channel));
         info!("Task spawned");
@@ -78,8 +81,7 @@ impl Data {
     /// Remove channel (inside the guild) to receive pokemon
     #[instrument(skip(self))]
     pub async fn stop(&self, guild: GuildId, channel: ChannelId) {
-        let mut guild_config = self.guild_configurations.write().await;
-        guild_config
+        self.guild_configurations
             .entry(guild)
             .and_modify(|config| config.remove_channel(&channel));
         info!("Config has been removed. Task should be stoppped");
@@ -87,8 +89,7 @@ impl Data {
 
     /// Returns true if a configuration for the channel in the guild is available
     pub async fn config_available(&self, guild: GuildId, channel: ChannelId) -> bool {
-        let conf = self.guild_configurations.read().await;
-        let available = match conf.get(&guild) {
+        let available = match self.guild_configurations.get(&guild) {
             Some(c) => c.has_channel(&channel),
             None => false,
         };
@@ -98,8 +99,11 @@ impl Data {
 
     /// Get the data's timeout.
     pub async fn timeout(&self, guild: GuildId, channel: ChannelId) -> Option<u64> {
-        let conf = self.guild_configurations.read().await;
-        let timeout = conf.get(&guild).map(|c| c.timeout(&channel)).flatten();
+        let timeout = self
+            .guild_configurations
+            .get(&guild)
+            .map(|c| c.timeout(&channel))
+            .flatten();
         debug!("{:?} minutes", timeout);
         timeout
     }
@@ -107,14 +111,16 @@ impl Data {
     /// Set the data's timeout.
     pub async fn set_timeout(&self, guild: GuildId, channel: ChannelId, timeout: u64) {
         debug!("{:?} minutes", timeout);
-        let mut conf = self.guild_configurations.write().await;
-        conf.entry(guild).or_default().set_timeout(channel, timeout);
+        self.guild_configurations
+            .entry(guild)
+            .or_default()
+            .set_timeout(channel, timeout);
     }
 
     /// Get the tags for a channel in a guild
     pub async fn tags(&self, guild: GuildId, channel: ChannelId) -> Option<Vec<String>> {
-        let conf = self.guild_configurations.read().await;
-        let tags = conf
+        let tags = self
+            .guild_configurations
             .get(&guild)
             .map(|c| c.tags(&channel).cloned())
             .flatten();
@@ -125,14 +131,19 @@ impl Data {
     /// Set the tags for a channel in a guild
     pub async fn set_tags(&self, guild: GuildId, channel: ChannelId, tags: Vec<String>) {
         debug!("{:?}", tags);
-        let mut conf = self.guild_configurations.write().await;
-        conf.entry(guild).or_default().set_tags(channel, tags);
+        self.guild_configurations
+            .entry(guild)
+            .or_default()
+            .set_tags(channel, tags);
     }
 
     /// Get the nsfw_mode for a channel in a guild
     pub async fn nsfw_mode(&self, guild: GuildId, channel: ChannelId) -> Option<NsfwMode> {
-        let conf = self.guild_configurations.read().await;
-        let nsfw_mode = conf.get(&guild).map(|c| c.nsfw_mode(&channel)).flatten();
+        let nsfw_mode = self
+            .guild_configurations
+            .get(&guild)
+            .map(|c| c.nsfw_mode(&channel))
+            .flatten();
         debug!("{:?}", nsfw_mode);
         nsfw_mode
     }
@@ -140,16 +151,16 @@ impl Data {
     /// Set the nsfw_mode for a channel in a guild
     pub async fn set_nsfw_mode(&self, guild: GuildId, channel: ChannelId, nsfw_mode: NsfwMode) {
         debug!("{:?}", nsfw_mode);
-        let mut conf = self.guild_configurations.write().await;
-        conf.entry(guild)
+        self.guild_configurations
+            .entry(guild)
             .or_default()
             .set_nsfw_mode(channel, nsfw_mode);
     }
 
     /// Return true if random_timeout is enabled for a channel in a guild
     pub async fn random_timeout(&self, guild: GuildId, channel: ChannelId) -> Option<bool> {
-        let conf = self.guild_configurations.read().await;
-        let random_timeout = conf
+        let random_timeout = self
+            .guild_configurations
             .get(&guild)
             .map(|c| c.random_timeout(&channel))
             .flatten();
@@ -168,8 +179,8 @@ impl Data {
             "setting random_timeout for {}/{}: {:?}",
             guild, channel, random_timeout
         );
-        let mut conf = self.guild_configurations.write().await;
-        conf.entry(guild)
+        self.guild_configurations
+            .entry(guild)
             .or_default()
             .set_random_timeout(channel, random_timeout);
     }
