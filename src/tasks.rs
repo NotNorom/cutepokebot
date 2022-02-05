@@ -112,7 +112,16 @@ pub async fn delete_button_listener(ctx: Context) {
             {
                 error!("Error updating original interaction response: {}", err);
             }
+        } else if let Err(err) = interaction
+            .create_interaction_response(&ctx.http, |resp| {
+                resp.kind(InteractionResponseType::Pong)
+                    .interaction_response_data(|resp_data| resp_data)
+            })
+            .await
+        {
+            error!("Error acknowledging interaction: {}", err);
         }
+
         if authors_of_message.len() >= 4 {
             if let Err(err) = ctx
                 .http
