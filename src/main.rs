@@ -71,6 +71,9 @@ async fn main() {
         }
 
         warn!("Shutting down");
+
+        framework_stop_copy.user_data().await.stop_all();
+
         framework_stop_copy
             .shard_manager()
             .lock()

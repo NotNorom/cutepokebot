@@ -24,12 +24,25 @@ impl GuildConfiguration {
     }
 
     pub fn stop(&mut self, channel: ChannelId) {
-        self.stop_signals.entry(channel).and_modify(|stop_signal| {
+        if let Some(stop_signal) = self.stop_signals.remove(&channel) {
+            if let Err(err) = stop_signal.send(true) {
+                error!("Could not send stop signal for {}: {}", channel, err);
+            }
+        };
+        self.channels.entry(channel).or_default().active = false;
+    }
+
+    /// Stops all sending tasks
+    pub fn stop_all(&mut self) {
+        self.stop_signals.iter().for_each(|(channel, stop_signal)| {
             if let Err(err) = stop_signal.send(true) {
                 error!("Could not send stop signal for {}: {}", channel, err);
             }
         });
-        self.channels.entry(channel).or_default().active = false;
+        self.stop_signals.clear();
+        self.channels.iter_mut().for_each(|(_, channel_conf)| {
+            channel_conf.active = false;
+        });
     }
 
     pub fn timeout(&self, channel: &ChannelId) -> Option<u64> {

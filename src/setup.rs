@@ -90,6 +90,16 @@ impl Data {
         info!("Requesting task for {} to be stopped", channel);
     }
 
+    /// Stop sending images (inside the guild)
+    #[instrument(skip(self))]
+    pub fn stop_all(&self) {
+        self.guild_configurations
+            .iter_mut()
+            .for_each(|mut guild_conf| {
+                guild_conf.stop_all();
+            });
+    }
+
     /// Get the data's timeout.
     pub async fn timeout(&self, guild: GuildId, channel: ChannelId) -> Option<u64> {
         let timeout = self
