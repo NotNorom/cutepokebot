@@ -6,6 +6,7 @@ use poise::{
     Framework,
 };
 use rs621::{client::Client, post::Post};
+use tokio::sync::watch;
 use tracing::{debug, error, info, instrument};
 
 use crate::{
@@ -66,35 +67,27 @@ impl Data {
         })
     }
 
-    /// Add channel for receiving pokemon
+    /// Start sending images to channel inside guild
     #[instrument(skip(self))]
     pub async fn start(&self, guild: GuildId, channel: ChannelId) {
-        self.guild_configurations
-            .entry(guild)
-            .or_default()
-            .add_channel(channel);
-
-        let _handle = tokio::spawn(poke_loop(self.clone(), guild, channel));
-        info!("Task spawned");
+        let mut entry = self.guild_configurations.entry(guild).or_default();
+        if !entry.is_active(channel) {
+            let (tx, rx) = watch::channel(false);
+            entry.start(channel, tx);
+            let _ = tokio::spawn(poke_loop(self.clone(), guild, channel, rx));
+            info!("Started sending images to {}", channel);
+        }
+        debug!("Already sending images to {}", channel);
     }
 
-    /// Remove channel (inside the guild) to receive pokemon
+    /// Stop sending images (inside the guild)
     #[instrument(skip(self))]
     pub async fn stop(&self, guild: GuildId, channel: ChannelId) {
         self.guild_configurations
             .entry(guild)
-            .and_modify(|config| config.remove_channel(&channel));
-        info!("Config has been removed. Task should be stoppped");
-    }
+            .and_modify(|config| config.stop(channel));
 
-    /// Returns true if a configuration for the channel in the guild is available
-    pub async fn config_available(&self, guild: GuildId, channel: ChannelId) -> bool {
-        let available = match self.guild_configurations.get(&guild) {
-            Some(c) => c.has_channel(&channel),
-            None => false,
-        };
-        debug!(available = available);
-        available
+        info!("Requesting task for {} to be stopped", channel);
     }
 
     /// Get the data's timeout.

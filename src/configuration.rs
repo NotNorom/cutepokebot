@@ -1,29 +1,35 @@
 use std::collections::{HashMap, HashSet};
 
 use poise::serenity_prelude::{ChannelId, RoleId};
+use tokio::sync::watch;
+use tracing::error;
 
 use crate::utils::NsfwMode;
 
 #[non_exhaustive]
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct GuildConfiguration {
     /// channel specific configurations
     channels: HashMap<ChannelId, ChannelConfiguration>,
     /// roles which are allowed to use the bot
     moderator_roles: HashSet<RoleId>,
+    /// signal for every channel that is running right now
+    stop_signals: HashMap<ChannelId, watch::Sender<bool>>,
 }
 
 impl GuildConfiguration {
-    pub fn add_channel(&mut self, channel: ChannelId) {
-        self.channels.entry(channel).or_default();
+    pub fn start(&mut self, channel: ChannelId, stop_sender: watch::Sender<bool>) {
+        self.stop_signals.entry(channel).or_insert(stop_sender);
+        self.channels.entry(channel).or_default().active = true;
     }
 
-    pub fn remove_channel(&mut self, channel: &ChannelId) {
-        self.channels.remove(channel);
-    }
-
-    pub fn has_channel(&self, channel: &ChannelId) -> bool {
-        self.channels.contains_key(channel)
+    pub fn stop(&mut self, channel: ChannelId) {
+        self.stop_signals.entry(channel).and_modify(|stop_signal| {
+            if let Err(err) = stop_signal.send(true) {
+                error!("Could not send stop signal for {}: {}", channel, err);
+            }
+        });
+        self.channels.entry(channel).or_default().active = false;
     }
 
     pub fn timeout(&self, channel: &ChannelId) -> Option<u64> {
@@ -56,6 +62,13 @@ impl GuildConfiguration {
 
     pub fn set_tags(&mut self, channel: ChannelId, tags: Vec<String>) {
         self.channels.entry(channel).or_default().tags = tags;
+    }
+
+    pub fn is_active(&self, channel: ChannelId) -> bool {
+        self.channels
+            .get(&channel)
+            .map(|c| c.active)
+            .unwrap_or_default()
     }
 }
 

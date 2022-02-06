@@ -19,10 +19,15 @@ use tracing::{error, info, instrument};
 
 /// Starts the loop for a channel in a guild
 #[instrument(skip(data))]
-pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
+pub async fn poke_loop(
+    data: Data,
+    guild: GuildId,
+    channel: ChannelId,
+    mut stop_signal: tokio::sync::watch::Receiver<bool>,
+) {
     let discord_http = data.context().http.clone();
 
-    while data.config_available(guild, channel).await {
+    loop {
         let post = data.get_post(guild, channel).await;
 
         match post {
@@ -84,7 +89,12 @@ pub async fn poke_loop(data: Data, guild: GuildId, channel: ChannelId) {
 
         info!("Waiting for {} minutes for the next post", sleep_duration);
 
-        tokio::time::sleep(Duration::from_secs(sleep_duration * 60)).await;
+        let sleep_task = tokio::time::sleep(Duration::from_secs(sleep_duration * 60));
+
+        tokio::select! {
+            _ = sleep_task => {},
+            _ = stop_signal.changed() => { break },
+        };
     }
 }
 
