@@ -124,7 +124,7 @@ pub async fn delete_button_listener(ctx: Context) {
             }
         } else if let Err(err) = interaction
             .create_interaction_response(&ctx.http, |resp| {
-                resp.kind(InteractionResponseType::Pong)
+                resp.kind(InteractionResponseType::DeferredUpdateMessage)
                     .interaction_response_data(|resp_data| resp_data)
             })
             .await
