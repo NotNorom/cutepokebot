@@ -1,5 +1,6 @@
 use tracing::{instrument, warn};
 
+mod checks;
 mod commands;
 mod configuration;
 mod constants;
@@ -35,6 +36,9 @@ async fn main() {
                 commands::register::register_in_guild(),
                 commands::register::register_globally(),
             ],
+            command_check: Some(|ctx| Box::pin(async move {
+                Ok(true)
+            })),
             ..Default::default()
         })
         .build()
