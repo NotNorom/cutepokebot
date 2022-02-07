@@ -1,4 +1,4 @@
-use poise::{send_reply, serenity_prelude::ChannelId};
+use poise::send_reply;
 
 use crate::{constants::MINIMUM_TIMEOUT_MINUTES, Context, Error};
 
@@ -6,11 +6,10 @@ use crate::{constants::MINIMUM_TIMEOUT_MINUTES, Context, Error};
 #[poise::command(prefix_command, slash_command, owners_only)]
 pub async fn timeout(
     ctx: Context<'_>,
-    #[description = "Selected channel"] channel: Option<ChannelId>,
     #[description = "Timeout in minutes"] timeout: Option<u64>,
 ) -> Result<(), Error> {
     let guild = ctx.guild_id().ok_or(Error::CommandNotRunInGuild)?;
-    let channel = channel.unwrap_or_else(|| ctx.channel_id());
+    let channel = ctx.channel_id();
 
     let current_timeout = ctx.data().timeout(guild, channel).await;
 
