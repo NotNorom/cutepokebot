@@ -6,7 +6,7 @@ use poise::{
     Framework,
 };
 use rs621::{client::Client, post::Post};
-use tokio::sync::watch;
+use tokio::sync::watch::{self, Sender};
 use tracing::{debug, error, info, instrument};
 
 use crate::{
@@ -25,6 +25,10 @@ pub struct Data {
     e926_client: Arc<Client>,
     /// serenity context
     context: Context,
+    /// when a shutdown command is executed, this signal
+    /// will be switched to true, signaling the shutdown functions
+    /// to run
+    shutdown_sender: Arc<Sender<bool>>,
 }
 
 impl Debug for Data {
@@ -39,7 +43,7 @@ impl Debug for Data {
 }
 
 impl Data {
-    fn new(context: Context) -> Result<Self, crate::Error> {
+    fn new(context: Context, shutdown_sender: Sender<bool>) -> Result<Self, crate::Error> {
         let user_agent = "CutePokebot/0.1.0 (norom)";
 
         let (e6_client, e9_client) =
@@ -64,6 +68,7 @@ impl Data {
             e621_client: Arc::new(e6_client),
             e926_client: Arc::new(e9_client),
             context,
+            shutdown_sender: Arc::new(shutdown_sender),
         })
     }
 
@@ -74,7 +79,7 @@ impl Data {
         if !entry.is_active(channel) {
             let (tx, rx) = watch::channel(false);
             entry.start(channel, tx);
-            let _ = tokio::spawn(poke_loop(self.clone(), guild, channel, rx));
+            let _ = tokio::spawn(send_images_loop(self.clone(), guild, channel, rx));
             info!("Started sending images to {}", channel);
         }
         debug!("Already sending images to {}", channel);
@@ -98,6 +103,11 @@ impl Data {
             .for_each(|mut guild_conf| {
                 guild_conf.stop_all();
             });
+    }
+
+    /// Sends a shutdown signal (as if presing ctrl-c)
+    pub fn shutdown(&self) {
+        let _ = self.shutdown_sender.send(true);
     }
 
     /// Get the data's timeout.
@@ -214,6 +224,7 @@ impl Data {
             }
             Err(err) => {
                 error!("{:?}", err);
+
                 None
             }
         }
@@ -229,8 +240,9 @@ pub async fn setup<U, E>(
     context: &Context,
     _ready: &Ready,
     _framework: &Framework<U, E>,
+    shutdown_sender: Sender<bool>,
 ) -> Result<crate::Data, crate::Error> {
-    let data = Data::new(context.clone())?;
+    let data = Data::new(context.clone(), shutdown_sender)?;
     let _ = tokio::spawn(delete_button_listener(context.clone()));
     Ok(data)
 }
