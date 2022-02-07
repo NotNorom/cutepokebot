@@ -11,7 +11,7 @@ use tracing::{debug, error, info, instrument};
 
 use crate::{
     configuration::GuildConfiguration,
-    tasks::{delete_button_listener, poke_loop},
+    tasks::{delete_button_listener, send_images_loop},
     utils::NsfwMode,
 };
 

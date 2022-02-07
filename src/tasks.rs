@@ -19,7 +19,7 @@ use tracing::{error, info, instrument};
 
 /// Starts the loop for a channel in a guild
 #[instrument(skip(data))]
-pub async fn poke_loop(
+pub async fn send_images_loop(
     data: Data,
     guild: GuildId,
     channel: ChannelId,
