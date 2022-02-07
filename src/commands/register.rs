@@ -1,3 +1,7 @@
+//! The commands in this module do not require special persmission
+//! checks, because the [poise::builtins::register_application_commands] function
+//! does it for us.
+
 use poise::send_reply;
 
 use crate::{Context, Error};
