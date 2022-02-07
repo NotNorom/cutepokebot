@@ -1,22 +1,16 @@
-use poise::{
-    send_reply,
-    serenity_prelude::{ChannelId, MessageBuilder},
-};
+use poise::{send_reply, serenity_prelude::MessageBuilder};
 
 use crate::{Context, Error};
 
-/// Stop sending images 
+/// Stop sending images
 #[poise::command(
     prefix_command,
     slash_command,
     required_permissions = "MANAGE_CHANNELS"
 )]
-pub async fn stop(
-    ctx: Context<'_>,
-    #[description = "Channel to stop"] channel: Option<ChannelId>,
-) -> Result<(), Error> {
+pub async fn stop(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx.guild_id().ok_or("Command must be run in server")?;
-    let channel = channel.unwrap_or_else(|| ctx.channel_id());
+    let channel = ctx.channel_id();
 
     send_reply(ctx, |f| {
         let content = MessageBuilder::new()

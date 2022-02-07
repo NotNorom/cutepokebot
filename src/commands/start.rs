@@ -1,7 +1,4 @@
-use poise::{
-    send_reply,
-    serenity_prelude::{ChannelId, MessageBuilder},
-};
+use poise::{send_reply, serenity_prelude::MessageBuilder};
 
 use crate::{Context, Error};
 
@@ -11,12 +8,9 @@ use crate::{Context, Error};
     slash_command,
     required_permissions = "MANAGE_CHANNELS"
 )]
-pub async fn start(
-    ctx: Context<'_>,
-    #[description = "Selected channel"] channel: Option<ChannelId>,
-) -> Result<(), Error> {
+pub async fn start(ctx: Context<'_>) -> Result<(), Error> {
     let guild = ctx.guild_id().ok_or("Command must be run in server")?;
-    let channel = channel.unwrap_or_else(|| ctx.channel_id());
+    let channel = ctx.channel_id();
 
     send_reply(ctx, |f| {
         let content = MessageBuilder::new()

@@ -1,4 +1,4 @@
-use poise::{send_reply, serenity_prelude::ChannelId};
+use poise::send_reply;
 
 use crate::{Context, Error};
 
@@ -10,11 +10,10 @@ use crate::{Context, Error};
 )]
 pub async fn random_timeout(
     ctx: Context<'_>,
-    #[description = "Selected channel"] channel: Option<ChannelId>,
     #[description = "Random timeout"] random_timeout: Option<bool>,
 ) -> Result<(), Error> {
     let guild = ctx.guild_id().ok_or("Command must be run in server")?;
-    let channel = channel.unwrap_or_else(|| ctx.channel_id());
+    let channel = ctx.channel_id();
 
     let current_random_timeout = ctx.data().random_timeout(guild, channel).await;
 
