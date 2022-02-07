@@ -5,8 +5,8 @@ use std::{
 
 use crate::{
     constants::MINIMUM_TIMEOUT_MINUTES,
-    utils::{embed_from_post, post_buttons, NsfwMode},
-    Data,
+    utils::{embed_from_post, post_buttons},
+    Data, Error,
 };
 
 use futures::stream::StreamExt;
@@ -18,7 +18,7 @@ use rand::Rng;
 use tracing::{error, info, instrument};
 
 /// Starts the loop for a channel in a guild
-#[instrument(skip(data))]
+#[instrument(skip(data, stop_signal))]
 pub async fn send_images_loop(
     data: Data,
     guild: GuildId,
@@ -32,19 +32,27 @@ pub async fn send_images_loop(
 
         match post {
             Err(err) => {
-                let tags = data.tags(guild, channel).await;
-                let nsfw_mode = data.nsfw_mode(guild, channel).await;
-                error!(
-                    "There is no post to send to guild: {}, channel: {}, nsfw: {:?}, tags: {:?}",
-                    guild, channel, nsfw_mode, tags
-                );
-                let content = if let Some(NsfwMode::NSFW) = nsfw_mode {
-                    "There is no post matching the tags."
-                } else {
-                    "There is no post matching the tags. Nsfw-mode is set to sfw, try setting nsfw-mode to nsfw."
-                };
-
-                let _ = channel.say(&discord_http, content).await;
+                match err {
+                    Error::Rs621(ref e) => match e {
+                        rs621::error::Error::Http { code, reason, .. } => {
+                            let reason =
+                                reason.to_owned().unwrap_or_else(|| "Unkown reason".into());
+                            let _ = channel
+                                .say(
+                                    &discord_http,
+                                    format!("API Error: Code {}, {}", code, reason),
+                                )
+                                .await;
+                        }
+                        _ => {
+                            let _ = channel.say(&discord_http, &err.to_string()).await;
+                        }
+                    },
+                    _ => {
+                        let _ = channel.say(&discord_http, &err.to_string()).await;
+                    }
+                }
+                error!("{}", err);
             }
             Ok(post) => {
                 info!(
