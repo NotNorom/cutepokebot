@@ -5,12 +5,13 @@ mod checks;
 mod commands;
 mod configuration;
 mod constants;
+mod error;
 mod setup;
 mod tasks;
 mod utils;
 
 type Data = setup::Data;
-type Error = Box<dyn std::error::Error + Send + Sync>;
+type Error = error::Error;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[tokio::main]

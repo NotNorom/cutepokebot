@@ -12,7 +12,7 @@ pub async fn random_timeout(
     ctx: Context<'_>,
     #[description = "Random timeout"] random_timeout: Option<bool>,
 ) -> Result<(), Error> {
-    let guild = ctx.guild_id().ok_or("Command must be run in server")?;
+    let guild = ctx.guild_id().ok_or(Error::CommandNotRunInGuild)?;
     let channel = ctx.channel_id();
 
     let current_random_timeout = ctx.data().random_timeout(guild, channel).await;

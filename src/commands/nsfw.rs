@@ -12,8 +12,8 @@ pub async fn nsfw(
     ctx: Context<'_>,
     #[description = "Nsfw mode"] nsfw: Option<NsfwMode>,
 ) -> Result<(), Error> {
-    let guild = ctx.guild_id().ok_or("Command must be run in server")?;
-    let channel =ctx.channel_id();
+    let guild = ctx.guild_id().ok_or(Error::CommandNotRunInGuild)?;
+    let channel = ctx.channel_id();
 
     let current_nsfw_mode = ctx.data().nsfw_mode(guild, channel).await;
 

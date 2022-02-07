@@ -9,7 +9,7 @@ pub async fn timeout(
     #[description = "Selected channel"] channel: Option<ChannelId>,
     #[description = "Timeout in minutes"] timeout: Option<u64>,
 ) -> Result<(), Error> {
-    let guild = ctx.guild_id().ok_or("Command must be run in server")?;
+    let guild = ctx.guild_id().ok_or(Error::CommandNotRunInGuild)?;
     let channel = channel.unwrap_or_else(|| ctx.channel_id());
 
     let current_timeout = ctx.data().timeout(guild, channel).await;

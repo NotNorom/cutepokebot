@@ -9,7 +9,7 @@ use crate::{Context, Error};
     required_permissions = "MANAGE_CHANNELS"
 )]
 pub async fn start(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx.guild_id().ok_or("Command must be run in server")?;
+    let guild = ctx.guild_id().ok_or(Error::CommandNotRunInGuild)?;
     let channel = ctx.channel_id();
 
     send_reply(ctx, |f| {
