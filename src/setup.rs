@@ -7,12 +7,13 @@ use poise::{
 };
 use rs621::{client::Client, post::Post};
 use tokio::sync::watch::{self, Sender};
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, info, instrument};
 
 use crate::{
     configuration::GuildConfiguration,
     tasks::{delete_button_listener, send_images_loop},
     utils::NsfwMode,
+    Error,
 };
 
 #[derive(Clone)]
@@ -201,33 +202,16 @@ impl Data {
     /// Get's a random post according to the configuration of the given channel
     /// inside the given guild
     #[instrument(skip(self))]
-    pub async fn get_post(&self, guild: GuildId, channel: ChannelId) -> Option<Post> {
-        let client = match self.nsfw_mode(guild, channel).await {
-            None => return None,
-            Some(nsfw_mode) => match nsfw_mode {
-                NsfwMode::SFW => self.e926_client.clone(),
-                NsfwMode::NSFW => self.e621_client.clone(),
-            },
+    pub async fn get_post(&self, guild: GuildId, channel: ChannelId) -> Result<Post, Error> {
+        let client = match self.nsfw_mode(guild, channel).await.unwrap_or_default() {
+            NsfwMode::SFW => self.e926_client.clone(),
+            NsfwMode::NSFW => self.e621_client.clone(),
         };
 
-        let tags = self.tags(guild, channel).await;
+        let tags = self.tags(guild, channel).await.ok_or(Error::NoTagsSet)?;
 
-        let post = match tags {
-            Some(tags) => client.search_random_post(&tags[..]).await,
-            None => return None,
-        };
-
-        match post {
-            Ok(post) => {
-                info!(post_id = post.id);
-                Some(post)
-            }
-            Err(err) => {
-                error!("{:?}", err);
-
-                None
-            }
-        }
+        let post = client.search_random_post(&tags[..]).await;
+        Ok(post?)
     }
 
     /// Get a reference to the data's context.

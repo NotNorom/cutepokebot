@@ -31,7 +31,7 @@ pub async fn send_images_loop(
         let post = data.get_post(guild, channel).await;
 
         match post {
-            None => {
+            Err(err) => {
                 let tags = data.tags(guild, channel).await;
                 let nsfw_mode = data.nsfw_mode(guild, channel).await;
                 error!(
@@ -46,7 +46,7 @@ pub async fn send_images_loop(
 
                 let _ = channel.say(&discord_http, content).await;
             }
-            Some(post) => {
+            Ok(post) => {
                 info!(
                     "Posting {:?} in guild {} in channel {}",
                     post.id, guild, channel
