@@ -1,4 +1,4 @@
-use poise::{send_reply, serenity_prelude::ChannelId};
+use poise::send_reply;
 
 use crate::{Context, Error};
 
@@ -10,11 +10,10 @@ use crate::{Context, Error};
 )]
 pub async fn tags(
     ctx: Context<'_>,
-    #[description = "Selected channel"] channel: Option<ChannelId>,
     #[description = "If provided, will set these as the new tags"] tags: Option<String>,
 ) -> Result<(), Error> {
     let guild = ctx.guild_id().ok_or(Error::CommandNotRunInGuild)?;
-    let channel = channel.unwrap_or_else(|| ctx.channel_id());
+    let channel = ctx.channel_id();
 
     let current_tags = ctx.data().tags(guild, channel).await;
 
