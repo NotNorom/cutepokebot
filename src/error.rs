@@ -6,6 +6,8 @@ pub enum Error {
     Rs621(#[from] rs621::error::Error),
     #[error("serenity error")]
     Serenity(#[from] poise::serenity_prelude::Error),
+    #[error("redis error")]
+    Redis(#[from] fred::error::RedisError),
     #[error("Command must be run in guild")]
     CommandNotRunInGuild,
     #[error("No tags have been set")]

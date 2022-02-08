@@ -1,6 +1,7 @@
 use std::{fmt::Debug, sync::Arc};
 
 use dashmap::DashMap;
+use fred::{types::{RedisConfig, ReconnectPolicy}, client::RedisClient, prelude::RedisError};
 use poise::{
     serenity_prelude::{ChannelId, Context, GuildId, Ready},
     Framework,
@@ -26,6 +27,8 @@ pub struct Data {
     e926_client: Arc<Client>,
     /// serenity context
     context: Context,
+    /// redis db handle
+    redis: RedisClient,
     /// when a shutdown command is executed, this signal
     /// will be switched to true, signaling the shutdown functions
     /// to run
@@ -44,7 +47,7 @@ impl Debug for Data {
 }
 
 impl Data {
-    fn new(context: Context, shutdown_sender: Sender<bool>) -> Result<Self, crate::Error> {
+    async fn new(context: Context, shutdown_sender: Sender<bool>) -> Result<Self, crate::Error> {
         let user_agent = "CutePokebot/0.1.0 (norom)";
 
         let (e6_client, e9_client) =
@@ -63,16 +66,30 @@ impl Data {
                     Client::new("https://e926.net", &user_agent)?,
                 )
             };
+        
+        let redis = async {
+            let config = RedisConfig::default();
+            let policy = ReconnectPolicy::new_exponential(0, 100, 30_000, 2);
+            let client = RedisClient::new(config);
+            client.connect(Some(policy)).await??;
+            client.wait_for_connect().await?;
+            Ok::<RedisClient, RedisError>(client)
+        }.await?;
 
         Ok(Self {
             guild_configurations: Arc::new(DashMap::new()),
             e621_client: Arc::new(e6_client),
             e926_client: Arc::new(e9_client),
             context,
+            redis,
             shutdown_sender: Arc::new(shutdown_sender),
         })
     }
 
+    async fn restore_from_db(&self) -> Result<(), crate::Error> {
+        
+        Ok(())
+    }
     /// Start sending images to channel inside guild
     #[instrument(skip(self))]
     pub async fn start(&self, guild: GuildId, channel: ChannelId) {
@@ -214,7 +231,7 @@ impl Data {
         Ok(post?)
     }
 
-    /// Get a reference to the data's context.
+    /// Get a reference to the data's serenity context.
     pub fn context(&self) -> &Context {
         &self.context
     }
@@ -226,7 +243,7 @@ pub async fn setup<U, E>(
     _framework: &Framework<U, E>,
     shutdown_sender: Sender<bool>,
 ) -> Result<crate::Data, crate::Error> {
-    let data = Data::new(context.clone(), shutdown_sender)?;
+    let data = Data::new(context.clone(), shutdown_sender).await?;
     let _ = tokio::spawn(delete_button_listener(context.clone()));
     Ok(data)
 }
