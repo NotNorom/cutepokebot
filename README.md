@@ -1,5 +1,27 @@
 # e621 nombot
 
+## Commands
+
+All commands, except mentioned otherwise, are per-channel.
+
+### `/stop`
+Stops sending images.
+
+### `/nsfw`
+Usage: `/nsfw <nsfw>` 
+- If `<nsfw>` is omitted, gets the currently set nsfw mode
+- If `<nsfw>` is provided, sets the nsfw mode
+- `<nsfw>` can be either "sfw" or "nsfw"
+    - "sfw" means "safe for work". this will use the e926.net api
+    - "nsfw" means "not safe for work". this will use the e621.net api
+
+### `/tags`
+Usage: `/tags <..tags>`
+- If `<tags>` is omitted, gets the currently set tags
+- If `<tags>` is provided, sets the tags
+
+<hr>
+
 ## Redis format
 
 The following strings are variables to be replaced in the redis keys:
