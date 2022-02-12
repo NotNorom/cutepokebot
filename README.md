@@ -4,11 +4,19 @@
 
 All commands, except mentioned otherwise, are per-channel.
 
+### `/start`
+Usage: `/start`
+Starts sending images in the current channel.
+
 ### `/stop`
-Stops sending images.
+Usage: `/stop`
+Stops sending images in the current channel.
+
+### `/random_timeout`
+Usage `/random_timeout <random_timeout>`
 
 ### `/nsfw`
-Usage: `/nsfw <nsfw>` 
+Usage: `/nsfw <nsfw>`
 - If `<nsfw>` is omitted, gets the currently set nsfw mode
 - If `<nsfw>` is provided, sets the nsfw mode
 - `<nsfw>` can be either "sfw" or "nsfw"
@@ -19,6 +27,9 @@ Usage: `/nsfw <nsfw>`
 Usage: `/tags <..tags>`
 - If `<tags>` is omitted, gets the currently set tags
 - If `<tags>` is provided, sets the tags
+    - Tags are space separated
+    - Tags are the exact same thing you would enter into the e621/e926 search bar
+    - See more infos on tags here: https://e926.net/help/cheatsheet
 
 <hr>
 
