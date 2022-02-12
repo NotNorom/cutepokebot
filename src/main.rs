@@ -6,6 +6,7 @@ mod commands;
 mod configuration;
 mod constants;
 mod error;
+mod persistance;
 mod setup;
 mod tasks;
 mod utils;

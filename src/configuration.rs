@@ -89,15 +89,15 @@ impl GuildConfiguration {
 #[derive(Debug, Clone)]
 pub struct ChannelConfiguration {
     /// True if the posting loop is running
-    active: bool,
+    pub(crate) active: bool,
     /// Timeout in minutes
-    timeout: u64,
+    pub(crate) timeout: u64,
     /// True if timeout should be interpreted as a maximum timeout
-    random_timeout: bool,
+    pub(crate) random_timeout: bool,
     /// If the query should return sfw or nsfw posts
-    nsfw_mode: NsfwMode,
+    pub(crate) nsfw_mode: NsfwMode,
     /// The tags to search for
-    tags: Vec<String>,
+    pub(crate) tags: Vec<String>,
 }
 
 impl Default for ChannelConfiguration {
