@@ -88,8 +88,27 @@ The following strings are variables to be replaced in the redis keys:
 - `USER_ID`: An ID of a discord user. As time of writing, this is a 64 bit unsigned int
 
 
+### `BOT_PREFIX::KNOWN_GUILDS`
+Set of all guild ids
+
+
+### `BOT_PREFIX::KNOWN_CHANNELS::GUILD_ID`
+Set of all channel ids of a guild
+
+
+### `BOT_PREFIX::KNOWN_MESSAGES::CHANNEL_ID`
+Set of all message ids of a channel
+
+
+### `BOT_PREFIX::CONF::GUILD_ID`
+Points to a hashmap of possible configuration parameters for a guild
+Current config parameters are:
+- mdoerator_roles (`string`):
+    - role ids separated by spaces which are allowed to run the bot commands
+
+
 ### `BOT_PREFIX::CONF::GUILD_ID::CHANNEL_ID`
-Points to a hashmap of possible configuration parameters.
+Points to a hashmap of possible configuration parameters for a channel
 Current config parameters are:
 - tags (`string`):
     - the search query with each tag separated by spaces

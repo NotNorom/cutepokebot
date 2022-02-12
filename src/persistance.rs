@@ -2,18 +2,33 @@ use std::str::FromStr;
 
 use fred::{
     self,
+    client::RedisClient,
     error::RedisErrorKind,
     prelude::RedisError,
     types::{RedisResponse, RedisValue},
 };
-use poise::serenity_prelude::{GuildId, ChannelId};
+use poise::serenity_prelude::{ChannelId, GuildId};
 
-use crate::{configuration::ChannelConfiguration, utils::NsfwMode};
+use crate::{
+    configuration::{ChannelConfiguration, GuildConfiguration},
+    constants::{REDIS_PATH_SEPARATOR as SEP, REDIS_PREFIX},
+    utils::NsfwMode,
+};
 
-pub async fn get_channel_config(guild: GuildId, channel: ChannelId) -> Result<ChannelConfiguration, RedisError> {
-    Err(RedisError::new_canceled())
+// pub async fn get_guild_config(redis: &RedisClient, guild: GuildId) -> Result<GuildConfiguration, RedisError> {
+//     let config = 
+// }
+
+pub async fn get_channel_config(
+    redis: &RedisClient,
+    guild: GuildId,
+    channel: ChannelId,
+) -> Result<ChannelConfiguration, RedisError> {
+    let config = redis
+        .hgetall(format!("{REDIS_PREFIX}{SEP}CONF{SEP}{guild}{SEP}{channel}"))
+        .await;
+    config
 }
-
 
 impl RedisResponse for ChannelConfiguration {
     fn from_value(value: RedisValue) -> Result<Self, RedisError> {
