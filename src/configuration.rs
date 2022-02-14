@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use poise::serenity_prelude::{ChannelId, RoleId};
+use poise::serenity_prelude::{Channel, ChannelId, RoleId};
 use tokio::sync::watch;
 use tracing::error;
 
@@ -10,14 +10,23 @@ use crate::utils::NsfwMode;
 #[derive(Debug, Default)]
 pub struct GuildConfiguration {
     /// channel specific configurations
-    channels: HashMap<ChannelId, ChannelConfiguration>,
+    pub(crate) channels: HashMap<ChannelId, ChannelConfiguration>,
     /// roles which are allowed to use the bot
-    moderator_roles: HashSet<RoleId>,
+    #[allow(unused)]
+    pub(crate) moderator_roles: HashSet<RoleId>,
     /// signal for every channel that is running right now
-    stop_signals: HashMap<ChannelId, watch::Sender<bool>>,
+    pub(crate) stop_signals: HashMap<ChannelId, watch::Sender<bool>>,
 }
 
 impl GuildConfiguration {
+    pub fn insert(
+        &mut self,
+        channel: ChannelId,
+        config: ChannelConfiguration,
+    ) -> Option<ChannelConfiguration> {
+        self.channels.insert(channel, config)
+    }
+
     pub fn start(&mut self, channel: ChannelId, stop_sender: watch::Sender<bool>) {
         self.stop_signals.entry(channel).or_insert(stop_sender);
         self.channels.entry(channel).or_default().active = true;

@@ -100,14 +100,14 @@ Set of all channel ids of a guild
 Set of all message ids of a channel
 
 
-### `BOT_PREFIX::CONF::GUILD_ID`
+### `BOT_PREFIX::GUILD_CONF::GUILD_ID`
 Points to a hashmap of possible configuration parameters for a guild
 Current config parameters are:
-- mdoerator_roles (`string`):
+- moderator_roles (`string`):
     - role ids separated by spaces which are allowed to run the bot commands
 
 
-### `BOT_PREFIX::CONF::GUILD_ID::CHANNEL_ID`
+### `BOT_PREFIX::CHANNEL_CONF::CHANNEL_ID`
 Points to a hashmap of possible configuration parameters for a channel
 Current config parameters are:
 - tags (`string`):
@@ -125,7 +125,7 @@ Current config parameters are:
     - amount of minutes that an entry is kept in cache
 
 
-### `BOT_PREFIX::POSTS::GUILD_ID::CHANNEL_ID::MESSAGE_ID`
+### `BOT_PREFIX::POSTS::MESSAGE_ID`
 A hashmap:
 - post_id (`int`):
     - the e621/e926 post id
@@ -135,9 +135,9 @@ A sorted hashmap with the key being a post ID and the value the timestamp it was
 - These ID's will be evicted after `repost_cache_timeout` minutes of time have passed.
 
 
-### `BOT_PREFIX::DOWNVOTERS::GUILD_ID::CHANNEL_ID::MESSAGE_ID`
+### `BOT_PREFIX::DOWNVOTERS::MESSAGE_ID`
 A set of discord user ids who downvoted the post on that message id.
 
 
-### `BOT_PREFIX::UPVOTERS::GUILD_ID::CHANNEL_ID::MESSAGE_ID`
+### `BOT_PREFIX::UPVOTERS::MESSAGE_ID`
 A set of discord user ids who upvoted the post on that message id.

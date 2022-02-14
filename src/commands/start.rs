@@ -23,7 +23,7 @@ pub async fn start(ctx: Context<'_>) -> Result<(), Error> {
     })
     .await?;
 
-    ctx.data().start(guild, channel).await;
+    ctx.data().start(guild, channel, None).await;
 
     Ok(())
 }

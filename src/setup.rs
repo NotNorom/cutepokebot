@@ -1,17 +1,30 @@
-use std::{fmt::Debug, sync::Arc};
+#![allow(unused_imports)]
+
+use std::{fmt::Debug, sync::Arc, time::Duration};
 
 use dashmap::DashMap;
-use fred::{types::{RedisConfig, ReconnectPolicy}, client::RedisClient, prelude::RedisError};
+use fred::{
+    client::RedisClient,
+    prelude::RedisError,
+    types::{ReconnectPolicy, RedisConfig},
+};
+
 use poise::{
-    serenity_prelude::{ChannelId, Context, GuildId, Ready},
+    futures_util::{FutureExt, StreamExt},
+    serenity_prelude::{ChannelId, Context, GuildId, MessageId, Ready},
     Framework,
 };
+use rand::Rng;
 use rs621::{client::Client, post::Post};
-use tokio::sync::watch::{self, Sender};
+use tokio::{
+    sync::watch::{self, Sender},
+    time::sleep,
+};
 use tracing::{debug, info, instrument};
 
 use crate::{
     configuration::GuildConfiguration,
+    persistance::{get_channel_config, get_guild_config, known_channel_ids, known_guild_ids},
     tasks::{delete_button_listener, send_images_loop},
     utils::NsfwMode,
     Error,
@@ -33,6 +46,8 @@ pub struct Data {
     /// will be switched to true, signaling the shutdown functions
     /// to run
     shutdown_sender: Arc<Sender<bool>>,
+    // post history
+    // post_history: Arc<DashMap<MessageId, u64>>,
 }
 
 impl Debug for Data {
@@ -66,7 +81,7 @@ impl Data {
                     Client::new("https://e926.net", &user_agent)?,
                 )
             };
-        
+
         let redis = async {
             let config = RedisConfig::default();
             let policy = ReconnectPolicy::new_exponential(0, 100, 30_000, 2);
@@ -74,7 +89,8 @@ impl Data {
             client.connect(Some(policy)).await??;
             client.wait_for_connect().await?;
             Ok::<RedisClient, RedisError>(client)
-        }.await?;
+        }
+        .await?;
 
         Ok(Self {
             guild_configurations: Arc::new(DashMap::new()),
@@ -87,24 +103,39 @@ impl Data {
     }
 
     async fn restore_from_db(&self) -> Result<(), crate::Error> {
-        
+        for guild_id in known_guild_ids(&self.redis).await? {
+            let mut guild_conf = get_guild_config(&self.redis, guild_id).await?;
+
+            for channel_id in known_channel_ids(&self.redis, guild_id).await? {
+                guild_conf.insert(
+                    channel_id,
+                    get_channel_config(&self.redis, channel_id).await?,
+                );
+            }
+
+            self.guild_configurations.insert(guild_id, guild_conf);
+        }
         Ok(())
     }
     /// Start sending images to channel inside guild
-    #[instrument(skip(self))]
-    pub async fn start(&self, guild: GuildId, channel: ChannelId) {
+    pub async fn start(&self, guild: GuildId, channel: ChannelId, delay: Option<u64>) {
         let mut entry = self.guild_configurations.entry(guild).or_default();
         if !entry.is_active(channel) {
             let (tx, rx) = watch::channel(false);
             entry.start(channel, tx);
-            let _ = tokio::spawn(send_images_loop(self.clone(), guild, channel, rx));
+            let self_clone = self.clone();
+            tokio::spawn(async move {
+                if let Some(delay) = delay {
+                    sleep(Duration::from_secs(delay)).await;
+                }
+                send_images_loop(self_clone, guild, channel, rx).await;
+            });
             info!("Started sending images to {}", channel);
         }
         debug!("Already sending images to {}", channel);
     }
 
     /// Stop sending images (inside the guild)
-    #[instrument(skip(self))]
     pub async fn stop(&self, guild: GuildId, channel: ChannelId) {
         self.guild_configurations
             .entry(guild)
@@ -113,8 +144,28 @@ impl Data {
         info!("Requesting task for {} to be stopped", channel);
     }
 
+    /// Starts all tasks marked active.
+    ///
+    /// This function is supposed to be called only once,
+    /// right after Data has been restored from the database.
+    async fn start_all(&self) {
+        for guild_conf in self.guild_configurations.iter() {
+            let guild_id = guild_conf.key().clone();
+            for (idx, (channel_id, channel_conf)) in guild_conf.channels.iter().enumerate() {
+                if channel_conf.active {
+                    // generate some random delay as not to spam e6 all at once.
+                    // we'd get ratelimited anyway
+                    let jitter = {
+                        let mut rng = rand::thread_rng();
+                        rng.gen_range(idx..idx + 180) as u64
+                    };
+                    self.start(guild_id, *channel_id, Some(jitter)).await;
+                }
+            }
+        }
+    }
+
     /// Stop sending images (inside the guild)
-    #[instrument(skip(self))]
     pub fn stop_all(&self) {
         self.guild_configurations
             .iter_mut()
@@ -218,7 +269,6 @@ impl Data {
 
     /// Get's a random post according to the configuration of the given channel
     /// inside the given guild
-    #[instrument(skip(self))]
     pub async fn get_post(&self, guild: GuildId, channel: ChannelId) -> Result<Post, Error> {
         let client = match self.nsfw_mode(guild, channel).await.unwrap_or_default() {
             NsfwMode::SFW => self.e926_client.clone(),
@@ -244,6 +294,8 @@ pub async fn setup<U, E>(
     shutdown_sender: Sender<bool>,
 ) -> Result<crate::Data, crate::Error> {
     let data = Data::new(context.clone(), shutdown_sender).await?;
+    data.restore_from_db().await?;
+    data.start_all().await;
     let _ = tokio::spawn(delete_button_listener(context.clone()));
     Ok(data)
 }
