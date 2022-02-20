@@ -1,5 +1,5 @@
 use tokio::sync::watch;
-use tracing::{instrument, warn};
+use tracing::{debug, error, info, instrument, warn};
 
 mod checks;
 mod commands;
@@ -68,10 +68,16 @@ async fn main() {
             ];
 
             tokio::select! {
-                _ = shutdown_receiver.changed() => {},
-                v = s1.recv() => v.unwrap(),
-                v = s2.recv() => v.unwrap(),
-                v = s3.recv() => v.unwrap(),
+                v = shutdown_receiver.changed() => {
+                    if v.is_err() {
+                        error!("shutdown_receiver has been dropped. setup_user_data must have failed. unclean shutdown");
+                        return
+                    }
+                    debug!("received signal: shutdown_receiver: {:?}", v);
+                },
+                _ = s1.recv() => {debug!("received signal: hangup")},
+                _ = s2.recv() => {debug!("received signal: interrupt")},
+                _ = s3.recv() => {debug!("received signal: terminate")},
             };
         }
         #[cfg(windows)]
@@ -80,24 +86,44 @@ async fn main() {
             let (mut s1, mut s2) = (signal::ctrl_c().unwrap(), signal::ctrl_break().unwrap());
 
             tokio::select! {
-                _ = shutdown_receiver.changed() => {},
-                v = s1.recv() => v.unwrap(),
-                v = s2.recv() => v.unwrap(),
+                _ = shutdown_receiver.changed() => {debug!("received signal: shutdown_receiver")},
+                _ = s1.recv() => debug!("received signal: ctrl_c"),
+                _ = s2.recv() => debug!("received signal: ctrl_break"),
             };
         }
 
-        warn!("Shutting down");
-
-        framework_stop_copy.user_data().await.stop_all();
-
-        framework_stop_copy
-            .shard_manager()
-            .lock()
-            .await
-            .shutdown_all()
-            .await;
+        warn!("Shutting down tasks");
+        {
+            let user_data = framework_stop_copy.user_data().await;
+            debug!("Got user data, starting shutdown for guild tasks");
+            user_data.stop_all();
+            debug!("User data tasks stopped");
+        }
+        warn!("Shutting down shards");
+        {
+            framework_stop_copy
+                .shard_manager()
+                .lock()
+                .await
+                .shutdown_all()
+                .await;
+        }
+        warn!("Storing state to db");
+        {
+            let user_data = framework_stop_copy.user_data().await;
+            debug!("Got user data, storing data");
+            if let Err(err) = user_data.store_to_db().await {
+                error!("Error storing data: {err}");
+            } else {
+                debug!("Data stored");
+            }
+        }
     });
 
     warn!("Starting up");
-    framework.start_autosharded().await.unwrap();
+    if let Err(err) = framework.start_autosharded().await {
+        error!("Error starting up: {:?}", err);
+    } else {
+        info!("Startup successfull");
+    }
 }
