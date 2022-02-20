@@ -102,7 +102,11 @@ impl Data {
         })
     }
 
-    async fn restore_from_db(&self) -> Result<(), crate::Error> {
+    pub(crate) async fn store_to_db(&self) -> Result<(), crate::Error> {
+        Ok(())
+    }
+
+    pub(crate) async fn restore_from_db(&self) -> Result<(), crate::Error> {
         for guild_id in known_guild_ids(&self.redis).await? {
             let mut guild_conf = get_guild_config(&self.redis, guild_id).await?;
 
@@ -150,7 +154,7 @@ impl Data {
     /// right after Data has been restored from the database.
     async fn start_all(&self) {
         for guild_conf in self.guild_configurations.iter() {
-            let guild_id = guild_conf.key().clone();
+            let guild_id = *guild_conf.key();
             for (idx, (channel_id, channel_conf)) in guild_conf.channels.iter().enumerate() {
                 if channel_conf.active {
                     // generate some random delay as not to spam e6 all at once.
@@ -170,6 +174,7 @@ impl Data {
         self.guild_configurations
             .iter_mut()
             .for_each(|mut guild_conf| {
+                debug!("Stopping tasks for guild {}", guild_conf.key());
                 guild_conf.stop_all();
             });
     }

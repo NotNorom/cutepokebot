@@ -18,7 +18,10 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 #[tokio::main]
 #[instrument]
 async fn main() {
-    tracing_subscriber::fmt().pretty().init();
+    tracing_subscriber::fmt()
+        .pretty()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
 
     let (shutdown_sender, mut shutdown_receiver) = watch::channel(false);
 
@@ -44,7 +47,7 @@ async fn main() {
                 commands::register::register_globally(),
                 commands::shutdown::shutdown(),
             ],
-            command_check: Some(|ctx| Box::pin(async move { Ok(true) })),
+            command_check: Some(|_ctx| Box::pin(async move { Ok(true) })),
             ..Default::default()
         })
         .build()

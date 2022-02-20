@@ -18,7 +18,6 @@ use rand::Rng;
 use tracing::{error, info, instrument};
 
 /// Starts the loop for a channel in a guild
-#[instrument(skip(data, stop_signal))]
 pub async fn send_images_loop(
     data: Data,
     guild: GuildId,
@@ -28,9 +27,7 @@ pub async fn send_images_loop(
     let discord_http = data.context().http.clone();
 
     loop {
-        let post = data.get_post(guild, channel).await;
-
-        match post {
+        match data.get_post(guild, channel).await {
             Err(err) => {
                 match err {
                     Error::Rs621(ref e) => match e {
@@ -107,7 +104,6 @@ pub async fn send_images_loop(
 }
 
 /// listens for delete button clicks on image posts
-#[instrument(skip(ctx))]
 pub async fn delete_button_listener(ctx: Context) {
     let mut collector = ComponentInteractionCollectorBuilder::new(&ctx)
         .filter(|interaction| interaction.data.custom_id == "delete-post")
