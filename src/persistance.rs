@@ -101,7 +101,7 @@ impl RedisResponse for GuildConfiguration {
             .split_whitespace()
             .map(|s| {
                 s.parse::<u64>()
-                    .map(|id| RoleId(id))
+                    .map(RoleId)
                     .map_err(|err| RedisError::new(RedisErrorKind::Parse, err.to_string()))
             })
             .collect();

@@ -189,8 +189,7 @@ impl Data {
         let timeout = self
             .guild_configurations
             .get(&guild)
-            .map(|c| c.timeout(&channel))
-            .flatten();
+            .and_then(|c| c.timeout(&channel));
         debug!("{:?} minutes", timeout);
         timeout
     }
@@ -209,8 +208,7 @@ impl Data {
         let tags = self
             .guild_configurations
             .get(&guild)
-            .map(|c| c.tags(&channel).cloned())
-            .flatten();
+            .and_then(|c| c.tags(&channel).cloned());
         debug!("{:?}", tags);
         tags
     }
@@ -229,8 +227,7 @@ impl Data {
         let nsfw_mode = self
             .guild_configurations
             .get(&guild)
-            .map(|c| c.nsfw_mode(&channel))
-            .flatten();
+            .and_then(|c| c.nsfw_mode(&channel));
         debug!("{:?}", nsfw_mode);
         nsfw_mode
     }
@@ -249,8 +246,7 @@ impl Data {
         let random_timeout = self
             .guild_configurations
             .get(&guild)
-            .map(|c| c.random_timeout(&channel))
-            .flatten();
+            .and_then(|c| c.random_timeout(&channel));
         debug!("{:?}", random_timeout);
         random_timeout
     }
@@ -291,7 +287,7 @@ impl Data {
 
         let post = post_search.next().await;
 
-        post.ok_or(Error::Uhhh("No posts this time...".to_string()))
+        post.ok_or_else(|| Error::Uhhh("No posts this time...".to_string()))
     }
 
     /// Get a reference to the data's serenity context.

@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use poise::serenity_prelude::{Channel, ChannelId, RoleId};
+use poise::serenity_prelude::{ChannelId, RoleId};
 use tokio::sync::watch;
 use tracing::error;
 

@@ -15,7 +15,7 @@ use poise::serenity_prelude::{
     MessageId, UserId,
 };
 use rand::Rng;
-use tracing::{error, info, instrument};
+use tracing::{error, info};
 
 /// Starts the loop for a channel in a guild
 pub async fn send_images_loop(
