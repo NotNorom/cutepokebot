@@ -280,10 +280,18 @@ impl Data {
             NsfwMode::NSFW => self.e621_client.clone(),
         };
 
-        let tags = self.tags(guild, channel).await.ok_or(Error::NoTagsSet)?;
+        let mut tags = self.tags(guild, channel).await.ok_or(Error::NoTagsSet)?;
+        tags.extend_from_slice(&["order:random".to_string(), "limit:20".to_string()]);
 
-        let post = client.search_random_post(&tags[..]).await;
-        Ok(post?)
+        let mut post_search = Box::pin(
+            client
+                .post_search(&tags[..])
+                .filter_map(|a| async { Result::ok(a) }),
+        );
+
+        let post = post_search.next().await;
+
+        post.ok_or(Error::Uhhh("No posts this time...".to_string()))
     }
 
     /// Get a reference to the data's serenity context.

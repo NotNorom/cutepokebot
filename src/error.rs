@@ -12,4 +12,6 @@ pub enum Error {
     CommandNotRunInGuild,
     #[error("No tags have been set")]
     NoTagsSet,
+    #[error("uhhh")]
+    Uhhh(String),
 }
