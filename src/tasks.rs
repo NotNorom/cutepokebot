@@ -107,7 +107,7 @@ pub async fn send_images_loop(
 pub async fn delete_button_listener(ctx: Context) {
     let mut collector = ComponentInteractionCollectorBuilder::new(&ctx)
         .filter(|interaction| interaction.data.custom_id == "delete-post")
-        .await;
+        .build();
 
     let mut authors = HashMap::<MessageId, HashSet<UserId>>::new();
     while let Some(interaction) = collector.next().await {

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use poise::{
     serenity_prelude::{ButtonStyle, CreateActionRow, CreateEmbed, ReactionType},
-    SlashChoiceParameter,
+    ChoiceParameter,
 };
 use rs621::post::Post;
 
@@ -41,7 +41,7 @@ pub fn post_buttons(current: usize, needed: usize) -> CreateActionRow {
 
 /// NSFW mode. Default is SFW
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy, SlashChoiceParameter)]
+#[derive(Debug, Clone, Copy, ChoiceParameter)]
 pub enum NsfwMode {
     #[name = "sfw"]
     SFW,
