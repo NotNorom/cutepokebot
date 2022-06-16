@@ -1,10 +1,14 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+};
 
-use poise::serenity_prelude::{ChannelId, RoleId};
+use poise::{
+    serenity_prelude::{ChannelId, RoleId},
+    ChoiceParameter,
+};
 use tokio::sync::watch;
 use tracing::error;
-
-use crate::utils::NsfwMode;
 
 #[non_exhaustive]
 #[derive(Debug, Default)]
@@ -151,6 +155,31 @@ impl Default for ChannelConfiguration {
             .into_iter()
             .map(|s| s.to_string())
             .collect(),
+        }
+    }
+}
+
+/// NSFW mode. Default is SFW
+#[allow(clippy::upper_case_acronyms)]
+#[derive(Debug, Clone, Copy, ChoiceParameter)]
+pub enum NsfwMode {
+    #[name = "sfw"]
+    SFW,
+    #[name = "nsfw"]
+    NSFW,
+}
+
+impl Default for NsfwMode {
+    fn default() -> Self {
+        Self::SFW
+    }
+}
+
+impl Display for NsfwMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NsfwMode::SFW => write!(f, "sfw"),
+            NsfwMode::NSFW => write!(f, "nsfw"),
         }
     }
 }

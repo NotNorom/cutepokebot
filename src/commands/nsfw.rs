@@ -1,6 +1,6 @@
 use poise::send_reply;
 
-use crate::{utils::NsfwMode, Context, Error};
+use crate::{configuration::NsfwMode, Context, Error};
 
 /// Gets or sets if the channel is nsfw
 #[poise::command(

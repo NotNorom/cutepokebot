@@ -10,9 +10,8 @@ use fred::{
 use poise::serenity_prelude::{ChannelId, GuildId, MessageId, RoleId};
 
 use crate::{
-    configuration::{ChannelConfiguration, GuildConfiguration},
+    configuration::{ChannelConfiguration, GuildConfiguration, NsfwMode},
     constants::{REDIS_PATH_SEPARATOR as SEP, REDIS_PREFIX},
-    utils::NsfwMode,
 };
 
 pub async fn known_guild_ids(redis: &RedisClient) -> Result<Vec<GuildId>, RedisError> {

@@ -1,9 +1,4 @@
-use std::fmt::Display;
-
-use poise::{
-    serenity_prelude::{ButtonStyle, CreateActionRow, CreateEmbed, ReactionType},
-    ChoiceParameter,
-};
+use poise::serenity_prelude::{ButtonStyle, CreateActionRow, CreateEmbed, ReactionType};
 use rs621::post::Post;
 
 pub fn embed_from_post(post: &Post) -> Result<CreateEmbed, String> {
@@ -37,29 +32,4 @@ pub fn post_buttons(current: usize, needed: usize) -> CreateActionRow {
     });
 
     action_row
-}
-
-/// NSFW mode. Default is SFW
-#[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy, ChoiceParameter)]
-pub enum NsfwMode {
-    #[name = "sfw"]
-    SFW,
-    #[name = "nsfw"]
-    NSFW,
-}
-
-impl Default for NsfwMode {
-    fn default() -> Self {
-        Self::SFW
-    }
-}
-
-impl Display for NsfwMode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            NsfwMode::SFW => write!(f, "sfw"),
-            NsfwMode::NSFW => write!(f, "nsfw"),
-        }
-    }
 }

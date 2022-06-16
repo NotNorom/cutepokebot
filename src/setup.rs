@@ -23,10 +23,9 @@ use tokio::{
 use tracing::{debug, info, instrument};
 
 use crate::{
-    configuration::GuildConfiguration,
+    configuration::{GuildConfiguration, NsfwMode},
     persistance::{get_channel_config, get_guild_config, known_channel_ids, known_guild_ids},
     tasks::{delete_button_listener, send_images_loop},
-    utils::NsfwMode,
     Error,
 };
 
