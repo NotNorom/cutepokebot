@@ -1,5 +1,5 @@
 pub mod nsfw;
-pub mod random_timeout;
+pub mod timeout_mode;
 pub mod register;
 pub mod shutdown;
 pub mod start;
