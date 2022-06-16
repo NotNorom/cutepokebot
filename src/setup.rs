@@ -24,7 +24,7 @@ use tracing::{debug, info, instrument};
 
 use crate::{
     configuration::{GuildConfiguration, NsfwMode},
-    persistance::{get_channel_config, get_guild_config, known_channel_ids, known_guild_ids},
+    persistence::{get_channel_config, get_guild_config, known_channel_ids, known_guild_ids},
     tasks::{delete_button_listener, send_images_loop},
     Error,
 };

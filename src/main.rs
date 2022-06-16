@@ -6,7 +6,7 @@ mod commands;
 mod configuration;
 mod constants;
 mod error;
-mod persistance;
+mod persistence;
 mod setup;
 mod tasks;
 mod utils;
@@ -73,7 +73,7 @@ async fn main() {
                         error!("shutdown_receiver has been dropped. setup_user_data must have failed. unclean shutdown");
                         return
                     }
-                    debug!("received signal: shutdown_receiver: {:?}", v);
+                    debug!("received signal: shutdown_receiver: {v:?}");
                 },
                 _ = s1.recv() => {debug!("received signal: hangup")},
                 _ = s2.recv() => {debug!("received signal: interrupt")},
@@ -113,7 +113,7 @@ async fn main() {
             let user_data = framework_stop_copy.user_data().await;
             debug!("Got user data, storing data");
             if let Err(err) = user_data.store_to_db().await {
-                error!("Error storing data: {err}");
+                error!("Error storing data: {err:?}");
             } else {
                 debug!("Data stored");
             }
@@ -122,7 +122,7 @@ async fn main() {
 
     warn!("Starting up");
     if let Err(err) = framework.start_autosharded().await {
-        error!("Error starting up: {:?}", err);
+        error!("Error starting up: {err:?}");
     } else {
         info!("Startup successfull");
     }
