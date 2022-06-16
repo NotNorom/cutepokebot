@@ -2,10 +2,11 @@ use std::{collections::HashSet, str::FromStr};
 
 use fred::{
     self,
-    client::RedisClient,
+    clients::RedisClient,
     error::RedisErrorKind,
+    interfaces::{HashesInterface, SetsInterface},
     prelude::RedisError,
-    types::{RedisResponse, RedisValue},
+    types::{FromRedis, RedisKey, RedisValue},
 };
 use poise::serenity_prelude::{ChannelId, GuildId, MessageId, RoleId};
 
@@ -85,11 +86,11 @@ pub async fn get_channel_config(
     config
 }
 
-impl RedisResponse for GuildConfiguration {
+impl FromRedis for GuildConfiguration {
     fn from_value(value: RedisValue) -> Result<Self, RedisError> {
         let value = value.into_map()?;
         let moderator_roles = value
-            .get("moderator_roles")
+            .get(&RedisKey::from_static_str("moderator_roles"))
             .ok_or_else(|| {
                 RedisError::new(RedisErrorKind::NotFound, "missing key: moderator_roles")
             })?
@@ -115,12 +116,12 @@ impl RedisResponse for GuildConfiguration {
     }
 }
 
-impl RedisResponse for ChannelConfiguration {
+impl FromRedis for ChannelConfiguration {
     fn from_value(value: RedisValue) -> Result<Self, RedisError> {
         let value = value.into_map()?;
 
         let active = value
-            .get("active")
+            .get(&RedisKey::from_static_str("active"))
             .ok_or_else(|| RedisError::new(RedisErrorKind::NotFound, "missing key: active"))?
             .as_bool()
             .ok_or_else(|| {
@@ -128,7 +129,7 @@ impl RedisResponse for ChannelConfiguration {
             })?;
 
         let timeout = value
-            .get("timeout")
+            .get(&RedisKey::from_static_str("timeout"))
             .ok_or_else(|| RedisError::new(RedisErrorKind::NotFound, "missing key: timeout"))?
             .as_u64()
             .ok_or_else(|| {
@@ -136,19 +137,19 @@ impl RedisResponse for ChannelConfiguration {
             })?;
 
         let timeout_mode = value
-            .get("timeout_mode")
+            .get(&RedisKey::from_static_str("timeout_mode"))
             .ok_or_else(|| RedisError::new(RedisErrorKind::NotFound, "missing key: timeout_mode"))?
             .clone()
             .convert::<TimeoutMode>()?;
 
         let nsfw_mode = value
-            .get("nsfw_mode")
+            .get(&RedisKey::from_static_str("nsfw_mode"))
             .ok_or_else(|| RedisError::new(RedisErrorKind::NotFound, "missing key: nsfw_mode"))?
             .clone()
             .convert::<NsfwMode>()?;
 
         let tags = value
-            .get("tags")
+            .get(&RedisKey::from_static_str("tags"))
             .ok_or_else(|| RedisError::new(RedisErrorKind::NotFound, "missing key: tags"))?
             .clone()
             .convert::<Vec<String>>()?;
@@ -163,7 +164,7 @@ impl RedisResponse for ChannelConfiguration {
     }
 }
 
-impl RedisResponse for NsfwMode {
+impl FromRedis for NsfwMode {
     fn from_value(value: RedisValue) -> Result<Self, RedisError> {
         let value = value.as_str().ok_or_else(|| {
             RedisError::new(RedisErrorKind::NotFound, "Nsfw mode is not a string")
@@ -174,7 +175,7 @@ impl RedisResponse for NsfwMode {
     }
 }
 
-impl RedisResponse for TimeoutMode {
+impl FromRedis for TimeoutMode {
     fn from_value(value: RedisValue) -> Result<Self, RedisError> {
         let value = value.as_str().ok_or_else(|| {
             RedisError::new(RedisErrorKind::NotFound, "Timeout mode is not a string")

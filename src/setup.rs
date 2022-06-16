@@ -4,7 +4,8 @@ use std::{fmt::Debug, sync::Arc, time::Duration};
 
 use dashmap::DashMap;
 use fred::{
-    client::RedisClient,
+    clients::RedisClient,
+    interfaces::ClientLike,
     prelude::RedisError,
     types::{ReconnectPolicy, RedisConfig},
 };
@@ -294,7 +295,6 @@ impl Data {
         &self.context
     }
 }
-
 
 /// called by the main function, sets up everything and runs the background tasks
 pub async fn setup<U, E>(
