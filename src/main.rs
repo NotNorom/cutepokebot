@@ -42,7 +42,7 @@ async fn main() {
                 commands::tags::tags(),
                 commands::nsfw::nsfw(),
                 commands::timeout::timeout(),
-                commands::random_timeout::random_timeout(),
+                commands::random_timeout::timeout_mode(),
                 commands::register::register_in_guild(),
                 commands::register::register_globally(),
                 commands::shutdown::shutdown(),

@@ -66,12 +66,12 @@ impl GuildConfiguration {
         self.channels.entry(channel).or_default().timeout = timeout;
     }
 
-    pub fn random_timeout(&self, channel: &ChannelId) -> Option<bool> {
-        self.channels.get(channel).map(|c| c.random_timeout)
+    pub fn timeout_mode(&self, channel: &ChannelId) -> Option<TimeoutMode> {
+        self.channels.get(channel).map(|c| c.timeout_mode)
     }
 
-    pub fn set_random_timeout(&mut self, channel: ChannelId, random_timeout: bool) {
-        self.channels.entry(channel).or_default().random_timeout = random_timeout;
+    pub fn set_timeout_mode(&mut self, channel: ChannelId, timeout_mode: TimeoutMode) {
+        self.channels.entry(channel).or_default().timeout_mode = timeout_mode;
     }
 
     pub fn nsfw_mode(&self, channel: &ChannelId) -> Option<NsfwMode> {
@@ -106,7 +106,7 @@ pub struct ChannelConfiguration {
     /// Timeout in minutes
     pub(crate) timeout: u64,
     /// True if timeout should be interpreted as a maximum timeout
-    pub(crate) random_timeout: bool,
+    pub(crate) timeout_mode: TimeoutMode,
     /// If the query should return sfw or nsfw posts
     pub(crate) nsfw_mode: NsfwMode,
     /// The tags to search for
@@ -118,7 +118,7 @@ impl Default for ChannelConfiguration {
         Self {
             active: false,
             timeout: 40,
-            random_timeout: false,
+            timeout_mode: TimeoutMode::Normal,
             nsfw_mode: NsfwMode::SFW,
             tags: vec![
                 "pokémon_(species)",
@@ -178,8 +178,32 @@ impl Default for NsfwMode {
 impl Display for NsfwMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NsfwMode::SFW => write!(f, "sfw"),
-            NsfwMode::NSFW => write!(f, "nsfw"),
+            Self::SFW => write!(f, "sfw"),
+            Self::NSFW => write!(f, "nsfw"),
+        }
+    }
+}
+
+/// Timeout mode. Default is normal
+#[derive(Debug, Clone, Copy, ChoiceParameter)]
+pub enum TimeoutMode {
+    #[name = "normal"]
+    Normal,
+    #[name = "random"]
+    Random,
+}
+
+impl Default for TimeoutMode {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
+
+impl Display for TimeoutMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Normal => write!(f, "normal"),
+            Self::Random => write!(f, "random"),
         }
     }
 }

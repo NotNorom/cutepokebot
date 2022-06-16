@@ -1,5 +1,9 @@
 use thiserror::Error;
 
+
+/// The error type for this crate.
+/// 
+/// Includes error for dependencies as well.
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("rs621 error")]

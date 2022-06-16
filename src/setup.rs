@@ -23,7 +23,7 @@ use tokio::{
 use tracing::{debug, info, instrument};
 
 use crate::{
-    configuration::{GuildConfiguration, NsfwMode},
+    configuration::{GuildConfiguration, NsfwMode, TimeoutMode},
     persistence::{get_channel_config, get_guild_config, known_channel_ids, known_guild_ids},
     tasks::{delete_button_listener, send_images_loop},
     Error,
@@ -240,31 +240,31 @@ impl Data {
             .set_nsfw_mode(channel, nsfw_mode);
     }
 
-    /// Return true if random_timeout is enabled for a channel in a guild
-    pub async fn random_timeout(&self, guild: GuildId, channel: ChannelId) -> Option<bool> {
-        let random_timeout = self
+    /// Get the timeout mode for a channel in a guild
+    pub async fn timeout_mode(&self, guild: GuildId, channel: ChannelId) -> Option<TimeoutMode> {
+        let timeout_mode = self
             .guild_configurations
             .get(&guild)
-            .and_then(|c| c.random_timeout(&channel));
-        debug!("{:?}", random_timeout);
-        random_timeout
+            .and_then(|c| c.timeout_mode(&channel));
+        debug!("{:?}", timeout_mode);
+        timeout_mode
     }
 
-    /// Set if random_timeout is to be used for a channel in a guild
-    pub async fn set_random_timeout(
+    /// Set the timeout mode for a channel in a guild
+    pub async fn set_timeout_mode(
         &self,
         guild: GuildId,
         channel: ChannelId,
-        random_timeout: bool,
+        timeout_mode: TimeoutMode,
     ) {
         debug!(
-            "setting random_timeout for {}/{}: {:?}",
-            guild, channel, random_timeout
+            "setting timeout_mode for {}/{}: {:?}",
+            guild, channel, timeout_mode
         );
         self.guild_configurations
             .entry(guild)
             .or_default()
-            .set_random_timeout(channel, random_timeout);
+            .set_timeout_mode(channel, timeout_mode);
     }
 
     /// Get's a random post according to the configuration of the given channel
@@ -295,6 +295,8 @@ impl Data {
     }
 }
 
+
+/// called by the main function, sets up everything and runs the background tasks
 pub async fn setup<U, E>(
     context: &Context,
     _ready: &Ready,

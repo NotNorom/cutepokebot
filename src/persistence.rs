@@ -10,7 +10,7 @@ use fred::{
 use poise::serenity_prelude::{ChannelId, GuildId, MessageId, RoleId};
 
 use crate::{
-    configuration::{ChannelConfiguration, GuildConfiguration, NsfwMode},
+    configuration::{ChannelConfiguration, GuildConfiguration, NsfwMode, TimeoutMode},
     constants::{REDIS_PATH_SEPARATOR as SEP, REDIS_PREFIX},
 };
 
@@ -135,18 +135,11 @@ impl RedisResponse for ChannelConfiguration {
                 RedisError::new(RedisErrorKind::Parse, "invalid value for key: timeout")
             })?;
 
-        let random_timeout = value
-            .get("random_timeout")
-            .ok_or_else(|| {
-                RedisError::new(RedisErrorKind::NotFound, "missing key: random_timeout")
-            })?
-            .as_bool()
-            .ok_or_else(|| {
-                RedisError::new(
-                    RedisErrorKind::Parse,
-                    "invalid value for key: random_timeout",
-                )
-            })?;
+        let timeout_mode = value
+            .get("timeout_mode")
+            .ok_or_else(|| RedisError::new(RedisErrorKind::NotFound, "missing key: timeout_mode"))?
+            .clone()
+            .convert::<TimeoutMode>()?;
 
         let nsfw_mode = value
             .get("nsfw_mode")
@@ -163,7 +156,7 @@ impl RedisResponse for ChannelConfiguration {
         Ok(Self {
             active,
             timeout,
-            random_timeout,
+            timeout_mode,
             nsfw_mode,
             tags,
         })
@@ -175,7 +168,18 @@ impl RedisResponse for NsfwMode {
         let value = value.as_str().ok_or_else(|| {
             RedisError::new(RedisErrorKind::NotFound, "Nsfw mode is not a string")
         })?;
-        let mode = NsfwMode::from_str(&value)
+        let mode = Self::from_str(&value)
+            .map_err(|e| RedisError::new(RedisErrorKind::Parse, e.to_string()))?;
+        Ok(mode)
+    }
+}
+
+impl RedisResponse for TimeoutMode {
+    fn from_value(value: RedisValue) -> Result<Self, RedisError> {
+        let value = value.as_str().ok_or_else(|| {
+            RedisError::new(RedisErrorKind::NotFound, "Timeout mode is not a string")
+        })?;
+        let mode = Self::from_str(&value)
             .map_err(|e| RedisError::new(RedisErrorKind::Parse, e.to_string()))?;
         Ok(mode)
     }

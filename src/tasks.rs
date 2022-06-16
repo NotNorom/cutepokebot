@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::{
+    configuration::TimeoutMode,
     constants::MINIMUM_TIMEOUT_MINUTES,
     utils::{embed_from_post, post_buttons},
     Data, Error,
@@ -82,14 +83,19 @@ pub async fn send_images_loop(
 
         let timeout_minutes = data.timeout(guild, channel).await.unwrap_or(40);
 
-        let sleep_duration = if data.random_timeout(guild, channel).await.unwrap_or(false) {
-            let lower_limit = MINIMUM_TIMEOUT_MINUTES;
-            let upper_limit = timeout_minutes;
+        let sleep_duration = match data
+            .timeout_mode(guild, channel)
+            .await
+            .unwrap_or(TimeoutMode::Normal)
+        {
+            TimeoutMode::Random => {
+                let lower_limit = MINIMUM_TIMEOUT_MINUTES;
+                let upper_limit = timeout_minutes;
 
-            let mut rng = rand::thread_rng();
-            rng.gen_range(lower_limit..=upper_limit)
-        } else {
-            timeout_minutes
+                let mut rng = rand::thread_rng();
+                rng.gen_range(lower_limit..=upper_limit)
+            }
+            TimeoutMode::Normal => timeout_minutes,
         };
 
         info!("Waiting for {} minutes for the next post", sleep_duration);

@@ -9,17 +9,18 @@ Usage: `/nsfw <nsfw: string>`
 - If `<nsfw>` is omitted, gets the currently set nsfw mode
 - If `<nsfw>` is provided, sets the nsfw mode
 - `<nsfw>` can be either "sfw" or "nsfw"
-    - "sfw" means "safe for work". this will use the e926.net api
-    - "nsfw" means "not safe for work". this will use the e621.net api
+    - `sfw` means "safe for work". this will use the e926.net api
+    - `nsfw` means "not safe for work". this will use the e621.net api
 - Required permissions: `MANAGE_CHANNEL`
 
 
-### `/random_timeout`
-Usage `/random_timeout <random_timeout: bool>`
-- If `<random_timeout>` is omitted, gets the current value
-- `<random_timeout>` can be either `true` or `false`
-    - If `true`, messages will be sent with a randomly choosen timeout, between a minimum of 3 minutes and a maximum of `<timeout>` minutes
-    - If `false`, messages will be sent every `<timeout>` minutes
+### `/timeout_mode`
+Usage `/timeout_mode <timeout_mode: string>`
+- If `<timeout_mode>` is omitted, gets the currently set timeout mode
+- If `<timeout_mode>` is provided, sets the timeout mode
+- `<timeout_mode>` can be either `normal` or `random`
+    - `random` means messages will be sent with a randomly choosen timeout, between a minimum of 3 minutes and a maximum of `<timeout>` minutes
+    - `normal` means messages will be sent every `<timeout>` minutes
 - Required permissions: `MANAGE_CHANNEL`
 
 
@@ -71,7 +72,7 @@ Usage: `/timeout <timeout: int>`
 - If `<timeout>` is omitted, gets the currently set timeout
 - If `<timeout>` is provided, sets the timeout
     - Timeout is in minutes
-    - See `/random_timeout` for more infos.
+    - See `/timeout_mode` for more infos.
 - Required permissions: `MANAGE_CHANNEL`
 
 
@@ -113,10 +114,12 @@ Current config parameters are:
 - tags (`string`):
     - the search query with each tag separated by spaces
 - timeout (`int`):
-    - if random_timeout is `false`, amount of minutes to wait till the next post
-    - if random_timeout is `true`, the maximum amount of minutes a timeout is choosen from
-- random_timeout (`bool`):
-    - if a random timeout should be used
+    - if timeout_mode is `false`, amount of minutes to wait till the next post
+    - if timeout_mode is `true`, the maximum amount of minutes a timeout is choosen from
+- timeout_mode (`string`):
+    - decided when the bot posts
+    - if `normal`, then the bot posts every n minutes
+    - if `random`, then the bot chooses a random number of minutes to wait
 - nsfw (`string`):
     - decides if queries are done against e621.net or e926.net
     - if `sfw`, then e926.net is used
