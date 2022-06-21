@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use poise::Framework;
+use poise::{serenity_prelude::GatewayIntents, Framework};
 use tokio::sync::watch::{self, Receiver};
 use tracing::{debug, error, info, instrument, warn};
 
@@ -30,6 +30,7 @@ async fn main() {
 
     let framework = poise::Framework::build()
         .token(dotenv::var("DISCORD_BOT_TOKEN").unwrap())
+        .intents(GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT)
         .user_data_setup(move |ctx, ready, framework| {
             Box::pin(setup::setup(ctx, ready, framework, shutdown_sender))
         })
