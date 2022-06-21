@@ -1,6 +1,7 @@
 use poise::serenity_prelude::{ButtonStyle, CreateActionRow, CreateEmbed, ReactionType};
 use rs621::post::Post;
 
+/// Create a discord embed from an e6/e9 post
 pub fn embed_from_post(post: &Post) -> Result<CreateEmbed, String> {
     Ok(CreateEmbed::default()
         .colour(0x203f6c_u32)

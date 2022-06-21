@@ -18,4 +18,13 @@ pub enum Error {
     NoTagsSet,
     #[error("uhhh")]
     Uhhh(String),
+    #[error("Min timeout is too low")]
+    MinTimeoutTooLow,
+    #[error("Max Timeout is too high")]
+    MaxTimeoutTooHigh,
+}
+
+
+pub enum ArgumentError {
+    
 }

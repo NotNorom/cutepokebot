@@ -10,6 +10,11 @@ use poise::{
 use tokio::sync::watch;
 use tracing::error;
 
+use crate::{
+    constants::{MAXIMUM_TIMEOUT_MINUTES, MINIMUM_TIMEOUT_MINUTES},
+    Error,
+};
+
 #[non_exhaustive]
 #[derive(Debug, Default)]
 pub struct GuildConfiguration {
@@ -205,5 +210,34 @@ impl Display for TimeoutMode {
             Self::Normal => write!(f, "normal"),
             Self::Random => write!(f, "random"),
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+
+pub struct Timeout {
+    min: u64,
+    max: u64,
+}
+
+impl Timeout {
+    pub fn new(min: u64, max: u64) -> Result<Self, Error> {
+        if min < MINIMUM_TIMEOUT_MINUTES {
+            return Err(Error::MinTimeoutTooLow);
+        }
+
+        if max > MAXIMUM_TIMEOUT_MINUTES {
+            return Err(Error::MaxTimeoutTooHigh);
+        }
+
+        Ok(Self { min, max })
+    }
+
+    pub fn min(&self) -> u64 {
+        self.min
+    }
+
+    pub fn max(&self) -> u64 {
+        self.max
     }
 }
