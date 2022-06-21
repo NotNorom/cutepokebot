@@ -30,7 +30,7 @@ async fn main() {
 
     let framework = poise::Framework::build()
         .token(dotenv::var("DISCORD_BOT_TOKEN").unwrap())
-        .intents(GatewayIntents::non_privileged() | GatewayIntents::MESSAGE_CONTENT)
+        .intents(GatewayIntents::non_privileged())
         .user_data_setup(move |ctx, ready, framework| {
             Box::pin(setup::setup(ctx, ready, framework, shutdown_sender))
         })
